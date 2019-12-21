@@ -1,9 +1,8 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{ac13a67a-4e63-4e50-950e-1d611f4d2bd7}") = "GrowEffect", "GrowEffect\GrowEffect.csproj", "{876e3fbf-c56f-472a-8cb5-8197e81fde7a}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrowEffect", "GrowEffect\GrowEffect.csproj", "{876E3FBF-C56F-472A-8CB5-8197E81FDE7A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +10,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{876e3fbf-c56f-472a-8cb5-8197e81fde7a}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{876e3fbf-c56f-472a-8cb5-8197e81fde7a}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{876e3fbf-c56f-472a-8cb5-8197e81fde7a}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{876e3fbf-c56f-472a-8cb5-8197e81fde7a}.Release|Any CPU.Build.0 = Release|Any CPU
+		{876E3FBF-C56F-472A-8CB5-8197E81FDE7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{876E3FBF-C56F-472A-8CB5-8197E81FDE7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{876E3FBF-C56F-472A-8CB5-8197E81FDE7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{876E3FBF-C56F-472A-8CB5-8197E81FDE7A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
