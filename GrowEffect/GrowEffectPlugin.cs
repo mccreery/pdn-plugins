@@ -1,96 +1,16 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Diagnostics;
-using System.Drawing;
-using System.Threading;
-using System.Reflection;
-using System.Drawing.Text;
-using System.Windows.Forms;
-using System.IO.Compression;
-using System.Drawing.Drawing2D;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Runtime.InteropServices;
-using Registry = Microsoft.Win32.Registry;
-using RegistryKey = Microsoft.Win32.RegistryKey;
 using PaintDotNet;
 using PaintDotNet.Effects;
-using PaintDotNet.AppModel;
-using PaintDotNet.Clipboard;
 using PaintDotNet.IndirectUI;
-using PaintDotNet.Collections;
 using PaintDotNet.PropertySystem;
-using IntSliderControl = System.Int32;
-using CheckboxControl = System.Boolean;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
 using ColorWheelControl = PaintDotNet.ColorBgra;
-using AngleControl = System.Double;
-using PanSliderControl = PaintDotNet.Pair<double,double>;
-using TextboxControl = System.String;
-using FilenameControl = System.String;
-using DoubleSliderControl = System.Double;
-using ListBoxControl = System.Byte;
+using IntSliderControl = System.Int32;
 using RadioButtonControl = System.Byte;
-using ReseedButtonControl = System.Byte;
-using MultiLineTextboxControl = System.String;
-using RollControl = System.Tuple<double, double, double>;
-
-[assembly: AssemblyTitle("Grow plugin for Paint.NET")]
-[assembly: AssemblyDescription("Grow a shape using alpha information from the image")]
-[assembly: AssemblyConfiguration("grow")]
-[assembly: AssemblyCompany("Sam McCreery")]
-[assembly: AssemblyProduct("Grow")]
-[assembly: AssemblyCopyright("Copyright ©2019 by Sam McCreery")]
-[assembly: AssemblyTrademark("")]
-[assembly: AssemblyCulture("")]
-[assembly: ComVisible(false)]
-[assembly: AssemblyVersion("0.1.*")]
 
 namespace GrowEffect
 {
-    public class PluginSupportInfo : IPluginSupportInfo
-    {
-        public string Author
-        {
-            get
-            {
-                return base.GetType().Assembly.GetCustomAttribute<AssemblyCopyrightAttribute>().Copyright;
-            }
-        }
-
-        public string Copyright
-        {
-            get
-            {
-                return base.GetType().Assembly.GetCustomAttribute<AssemblyDescriptionAttribute>().Description;
-            }
-        }
-
-        public string DisplayName
-        {
-            get
-            {
-                return base.GetType().Assembly.GetCustomAttribute<AssemblyProductAttribute>().Product;
-            }
-        }
-
-        public Version Version
-        {
-            get
-            {
-                return base.GetType().Assembly.GetName().Version;
-            }
-        }
-
-        public Uri WebsiteUri
-        {
-            get
-            {
-                return new Uri("https://www.getpaint.net/redirect/plugins.html");
-            }
-        }
-    }
-
     [PluginSupportInfo(typeof(PluginSupportInfo), DisplayName = "Grow")]
     public class GrowEffectPlugin : PropertyBasedEffect
     {
@@ -136,7 +56,6 @@ namespace GrowEffect
             FillColorOption2,
             FillColorOption3
         }
-
 
         protected override PropertyCollection OnCreatePropertyCollection()
         {
@@ -193,7 +112,7 @@ namespace GrowEffect
             if (length == 0) return;
             for (int i = startIndex; i < startIndex + length; ++i)
             {
-                Render(DstArgs.Surface,SrcArgs.Surface,rois[i]);
+                Render(DstArgs.Surface, SrcArgs.Surface, rois[i]);
             }
         }
 
@@ -211,11 +130,11 @@ namespace GrowEffect
         IntSliderControl Radius = 5; // [1,50] Radius
         RadioButtonControl FillColor = 0; // Color|Primary|Secondary|Custom
         ColorWheelControl CustomColor = ColorBgra.FromBgr(0, 0, 0); // [Black]
-        #endregion
+        #endregion UICode
 
         ColorBgra GetColor()
         {
-            switch(FillColor)
+            switch (FillColor)
             {
                 case 0:
                 default: return EnvironmentParameters.PrimaryColor;
@@ -227,21 +146,21 @@ namespace GrowEffect
         double[,] GetKernel(double radius)
         {
             int center = (int)Math.Ceiling(radius);
-            int size = center*2 + 1;
+            int size = center * 2 + 1;
 
             double[,] kernel = new double[size, size];
 
-            for(int y = 0; y < size; y++)
+            for (int y = 0; y < size; y++)
             {
-                for(int x = 0; x < size; x++)
+                for (int x = 0; x < size; x++)
                 {
                     int dx = x - center;
                     int dy = y - center;
-                    double d = Math.Sqrt(dx*dx + dy*dy);
+                    double d = Math.Sqrt(dx * dx + dy * dy);
 
                     double fac = radius + 1 - d;
-                    if(fac < 0) fac = 0;
-                    else if(fac > 1) fac = 1;
+                    if (fac < 0) fac = 0;
+                    else if (fac > 1) fac = 1;
 
                     // TODO debug
                     fac = Math.Round(fac);
@@ -257,7 +176,7 @@ namespace GrowEffect
             return src.Bounds.Contains(x, y) ? src[x, y] : ColorBgra.TransparentBlack;
         }
 
-        byte ConvolveMaxAlpha(Surface src, int centerX, int centerY, double[,] kernel, int anchorX=-1, int anchorY=-1)
+        byte ConvolveMaxAlpha(Surface src, int centerX, int centerY, double[,] kernel, int anchorX = -1, int anchorY = -1)
         {
             int kernelHeight = kernel.GetLength(0);
             int kernelWidth = kernel.GetLength(1);
@@ -266,9 +185,9 @@ namespace GrowEffect
             int kernelLeft = centerX - (anchorX >= 0 ? anchorX : kernelWidth / 2);
 
             byte maxAlpha = 0;
-            for(int y = 0; y < kernelHeight; y++)
+            for (int y = 0; y < kernelHeight; y++)
             {
-                for(int x = 0; x < kernelWidth; x++)
+                for (int x = 0; x < kernelWidth; x++)
                 {
                     byte alpha = ZeroPad(src, kernelLeft + x, kernelTop + y).A;
                     alpha = (byte)Math.Round((double)alpha * kernel[y, x]);
@@ -294,6 +213,6 @@ namespace GrowEffect
             }
         }
 
-        #endregion
+        #endregion User Entered Code
     }
 }

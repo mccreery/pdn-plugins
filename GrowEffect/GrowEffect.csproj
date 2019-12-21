@@ -56,7 +56,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Grow.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="GrowEffectPlugin.cs" />
+    <Compile Include="PluginSupportInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
