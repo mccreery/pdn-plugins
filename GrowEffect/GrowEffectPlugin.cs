@@ -47,7 +47,8 @@ namespace GrowEffect
         {
             Radius,
             FillColor,
-            CustomColor
+            CustomColor,
+            Antialiasing
         }
 
         public enum FillColorOptions
@@ -67,6 +68,7 @@ namespace GrowEffect
             props.Add(new Int32Property(PropertyNames.Radius, 5, 1, 50));
             props.Add(StaticListChoiceProperty.CreateForEnum<FillColorOptions>(PropertyNames.FillColor, 0, false));
             props.Add(new Int32Property(PropertyNames.CustomColor, ColorBgra.ToOpaqueInt32(Color.Black), 0, 0xffffff));
+            props.Add(new BooleanProperty(PropertyNames.Antialiasing));
 
             return new PropertyCollection(props);
         }
@@ -78,6 +80,7 @@ namespace GrowEffect
             configUI.SetPropertyControlValue(PropertyNames.Radius, ControlInfoPropertyNames.DisplayName, "Radius");
             configUI.SetPropertyControlValue(PropertyNames.FillColor, ControlInfoPropertyNames.DisplayName, "Color");
             configUI.SetPropertyControlType(PropertyNames.FillColor, PropertyControlType.RadioButton);
+            configUI.SetPropertyControlType(PropertyNames.Antialiasing, PropertyControlType.CheckBox);
             PropertyControlInfo FillColorControl = configUI.FindControlForPropertyName(PropertyNames.FillColor);
             FillColorControl.SetValueDisplayName(FillColorOptions.FillColorOption1, "Primary");
             FillColorControl.SetValueDisplayName(FillColorOptions.FillColorOption2, "Secondary");
@@ -103,6 +106,7 @@ namespace GrowEffect
             Radius = newToken.GetProperty<Int32Property>(PropertyNames.Radius).Value;
             FillColor = (byte)(int)newToken.GetProperty<StaticListChoiceProperty>(PropertyNames.FillColor).Value;
             CustomColor = ColorBgra.FromOpaqueInt32(newToken.GetProperty<Int32Property>(PropertyNames.CustomColor).Value);
+            antialiasing = newToken.GetProperty<BooleanProperty>(PropertyNames.Antialiasing).Value;
 
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
         }
@@ -130,6 +134,7 @@ namespace GrowEffect
         IntSliderControl Radius = 5; // [1,50] Radius
         RadioButtonControl FillColor = 0; // Color|Primary|Secondary|Custom
         ColorWheelControl CustomColor = ColorBgra.FromBgr(0, 0, 0); // [Black]
+        bool antialiasing = false;
         #endregion UICode
 
         ColorBgra GetColor()
@@ -141,6 +146,13 @@ namespace GrowEffect
                 case 1: return EnvironmentParameters.SecondaryColor;
                 case 2: return CustomColor;
             }
+        }
+
+        double Clamp(double x, double min, double max)
+        {
+            if (x < min) { return min; }
+            else if (x > max) { return max; }
+            else { return x; }
         }
 
         double[,] GetKernel(double radius)
@@ -156,15 +168,20 @@ namespace GrowEffect
                 {
                     int dx = x - center;
                     int dy = y - center;
-                    double d = Math.Sqrt(dx * dx + dy * dy);
+                    int distSq = dx * dx + dy * dy;
 
-                    double fac = radius + 1 - d;
-                    if (fac < 0) fac = 0;
-                    else if (fac > 1) fac = 1;
-
-                    // TODO debug
-                    fac = Math.Round(fac);
-
+                    double fac;
+                    if (antialiasing)
+                    {
+                        // Antialiased (double) circle
+                        double dist = Math.Sqrt(distSq);
+                        fac = Clamp(radius + 1 - dist, 0, 1);
+                    }
+                    else
+                    {
+                        // Non-antialiased circle
+                        fac = distSq <= radius * radius ? 1 : 0;
+                    }
                     kernel[y, x] = fac;
                 }
             }
@@ -208,7 +225,9 @@ namespace GrowEffect
                 if (IsCancelRequested) return;
                 for (int x = rect.Left; x < rect.Right; x++)
                 {
-                    dst[x, y] = color.NewAlpha(ConvolveMaxAlpha(src, x, y, kernel));
+                    // Show original image within shape
+                    ColorBgra srcColor = ColorBgra.Blend(color, src[x, y], src[x, y].A);
+                    dst[x, y] = srcColor.NewAlpha(ConvolveMaxAlpha(src, x, y, kernel));
                 }
             }
         }
