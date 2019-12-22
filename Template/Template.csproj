@@ -18,7 +18,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="..\Shared\AssemblyInfo.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
+
+        <EmbeddedResource Include="icon.png"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -34,6 +37,17 @@
         <Reference Include="PaintDotNet.Effects">
             <HintPath>C:\Program Files\paint.net\PaintDotNet.Effects.dll</HintPath>
         </Reference>
+
+        <Reference Include="System"/>
+        <Reference Include="System.Core"/>
+        <Reference Include="System.Drawing"/>
+        <Reference Include="System.Windows.Forms"/>
+        <Reference Include="System.Xml.Linq"/>
+        <Reference Include="System.Data.DataSetExtensions"/>
+        <Reference Include="Microsoft.CSharp"/>
+        <Reference Include="System.Data"/>
+        <Reference Include="System.Net.Http"/>
+        <Reference Include="System.Xml"/>
     </ItemGroup>
 
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
