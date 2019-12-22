@@ -26,7 +26,7 @@ namespace GrowEffect
         {
             get
             {
-                return null;
+                return new Bitmap(typeof(GrowEffectPlugin), "icon.png");
             }
         }
 
