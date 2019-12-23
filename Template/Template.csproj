@@ -24,8 +24,8 @@
         <Compile Include="..\Shared\AssemblyPluginInfo.cs"/>
 
         <Compile Include="Properties\AssemblyInfo.cs"/>
-        <Compile Include="ExampleEffectProperties.cs"/>
-        <Compile Include="ExampleEffectRender.cs"/>
+        <Compile Include="ExampleProperties.cs"/>
+        <Compile Include="ExampleRender.cs"/>
 
         <EmbeddedResource Include="icon.png">
             <LogicalName>$(RootNamespace).Template.icon.png</LogicalName>

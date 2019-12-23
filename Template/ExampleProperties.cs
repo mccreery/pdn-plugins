@@ -48,7 +48,8 @@ namespace AssortedPlugins.Template
         {
             base.OnCustomizeConfigUIWindowProperties(props);
 
-            props[ControlInfoPropertyNames.WindowTitle].Value = "Example";
+            props[ControlInfoPropertyNames.WindowTitle].Value =
+                typeof(ExampleEffect).Assembly.GetName().Name;
         }
 
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)
