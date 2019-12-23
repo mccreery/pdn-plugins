@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrowEffect", "GrowEffect\Gr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrowAndShrink", "GrowAndShrink\GrowAndShrink.csproj", "{FF34255E-FAD2-44DB-ADFF-0976CF83CDE1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blend", "Blend\Blend.csproj", "{C68441CB-B950-4499-8846-514C4058D977}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,5 +31,9 @@ Global
 		{FF34255E-FAD2-44DB-ADFF-0976CF83CDE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF34255E-FAD2-44DB-ADFF-0976CF83CDE1}.Release|Any CPU.ActiveCfg = Debug|Any CPU
 		{FF34255E-FAD2-44DB-ADFF-0976CF83CDE1}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{C68441CB-B950-4499-8846-514C4058D977}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C68441CB-B950-4499-8846-514C4058D977}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C68441CB-B950-4499-8846-514C4058D977}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{C68441CB-B950-4499-8846-514C4058D977}.Release|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 EndGlobal
