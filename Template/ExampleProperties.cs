@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Reflection;
 using PaintDotNet;
 using PaintDotNet.Effects;
 using PaintDotNet.IndirectUI;
@@ -14,7 +15,7 @@ namespace AssortedPlugins.Template
         private Int32 exampleProperty;
 
         public ExampleEffect() : base(
-                typeof(ExampleEffect).Assembly.GetName().Name,
+                typeof(ExampleEffect).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
                 new Bitmap(typeof(ExampleEffect), "icon.png"),
                 SubmenuNames.Render,
                 new EffectOptions() { Flags = EffectFlags.Configurable })
@@ -49,7 +50,7 @@ namespace AssortedPlugins.Template
             base.OnCustomizeConfigUIWindowProperties(props);
 
             props[ControlInfoPropertyNames.WindowTitle].Value =
-                typeof(ExampleEffect).Assembly.GetName().Name;
+                typeof(ExampleEffect).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
         }
 
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)

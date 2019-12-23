@@ -26,7 +26,7 @@ namespace AssortedPlugins
         {
             get
             {
-                return base.GetType().Assembly.GetName().Name;
+                return base.GetType().Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
             }
         }
 
