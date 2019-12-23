@@ -14,15 +14,16 @@ links will open in VS Code (using the `vscode` protocol).
 
 ## Debug Setup
 As far as I know, paint.net doesn't support sideloading plugins, so the easiest
-debug setup is to install the plugin as a symlink.
+debug setup is to install the plugin as a symlink:
 
-```bash
-cd PluginFolder
-# In Bash
-ln -s "bin/Debug/Effect.dll" "/c/Program Files/paint.net/Effects/Plugin.dll"
-# In CMD
-mklink "C:\Program Files\paint.net\Effects\Effect.dll" "bin\Debug\Plugin.dll"
+```bat
+mklink "C:\Program Files\paint.net\Effects\PluginName.dll" "PluginName\bin\Debug\PluginName.dll"
 ```
+
+You can also use [Link Shell Extension](https://schinagl.priv.at/nt/hardlinkshellext/linkshellextension.html)
+to make this process less painful. I found it much easier to pin the Effects
+folder in Explorer and drag-and-drop the DLLs while holding right click, which
+gives a "Drop Here... Symbolic Link" option.
 
 Since the plugin is installed, just use paint.net as the debug program, for
 example in VS Code `launch.json`:
