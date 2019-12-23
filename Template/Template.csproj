@@ -4,6 +4,8 @@
         <PlatformTarget>x64</PlatformTarget>
         <DebugType>portable</DebugType>
         <DefineConstants>TRACE</DefineConstants>
+        <RootNamespace>AssortedPlugins</RootNamespace>
+        <OutputType>Library</OutputType>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -19,10 +21,23 @@
 
     <ItemGroup>
         <Compile Include="..\Shared\AssemblyInfo.cs"/>
-        <Compile Include="Properties\AssemblyInfo.cs"/>
+        <Compile Include="..\Shared\AssemblyPluginInfo.cs"/>
 
-        <EmbeddedResource Include="icon.png"/>
+        <Compile Include="Properties\AssemblyInfo.cs"/>
+        <Compile Include="ExampleEffectProperties.cs"/>
+        <Compile Include="ExampleEffectRender.cs"/>
+
+        <EmbeddedResource Include="icon.png">
+            <LogicalName>$(RootNamespace).Template.icon.png</LogicalName>
+        </EmbeddedResource>
     </ItemGroup>
+
+    <!-- Prevents copying referenced DLLs to build folder -->
+    <ItemDefinitionGroup>
+        <Reference>
+            <Private>False</Private>
+        </Reference>
+    </ItemDefinitionGroup>
 
     <ItemGroup>
         <Reference Include="PaintDotNet.Base">
