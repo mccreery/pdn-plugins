@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Reflection;
 using PaintDotNet;
 using PaintDotNet.Effects;
@@ -12,12 +13,14 @@ namespace AssortedPlugins.GrowAndShrink
     [PluginSupportInfo(typeof(AssemblyPluginInfo))]
     public partial class GrowAndShrinkEffect : PropertyBasedEffect
     {
-        private Int32 exampleProperty;
+        private int radius;
+        private ColorBgra color;
+        private SmoothingMode smoothingMode;
 
         public GrowAndShrinkEffect() : base(
                 typeof(GrowAndShrinkEffect).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
                 new Bitmap(typeof(GrowAndShrinkEffect), "icon.png"),
-                SubmenuNames.Render,
+                SubmenuNames.Distort,
                 new EffectOptions() { Flags = EffectFlags.Configurable })
         {
         }
@@ -26,10 +29,17 @@ namespace AssortedPlugins.GrowAndShrink
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
-            configUI.SetPropertyControlType(nameof(exampleProperty),
+            configUI.SetPropertyControlType(nameof(radius), PropertyControlType.Slider);
+            configUI.SetPropertyControlValue(nameof(radius), ControlInfoPropertyNames.DisplayName, "Radius");
+
+            configUI.SetPropertyControlType(nameof(color),
                 PropertyControlType.ColorWheel);
-            configUI.SetPropertyControlValue(nameof(exampleProperty),
-                ControlInfoPropertyNames.DisplayName, "Example Property");
+            configUI.SetPropertyControlValue(nameof(color),
+                ControlInfoPropertyNames.DisplayName, "Color");
+
+            configUI.SetPropertyControlType(nameof(smoothingMode), PropertyControlType.CheckBox);
+            configUI.SetPropertyControlValue(nameof(smoothingMode), ControlInfoPropertyNames.DisplayName, "");
+            configUI.SetPropertyControlValue(nameof(smoothingMode), ControlInfoPropertyNames.Description, "Antialiasing");
 
             return configUI;
         }
@@ -39,8 +49,12 @@ namespace AssortedPlugins.GrowAndShrink
             List<Property> props = new List<Property>();
             ColorBgra primaryColor = EnvironmentParameters.PrimaryColor;
 
-            props.Add(new Int32Property(nameof(exampleProperty),
-                ColorBgra.ToOpaqueInt32(primaryColor), 0x000000, 0xffffff));
+            props.Add(new Int32Property(nameof(radius), 0, -50, 50));
+            props.Add(new Int32Property(nameof(color),
+                ColorBgra.ToOpaqueInt32(primaryColor.NewAlpha(255)),
+                0x000000, 0xffffff));
+
+            props.Add(new BooleanProperty(nameof(smoothingMode), false));
 
             return new PropertyCollection(props);
         }
@@ -57,7 +71,15 @@ namespace AssortedPlugins.GrowAndShrink
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
 
-            exampleProperty = newToken.GetProperty<Int32Property>(nameof(exampleProperty)).Value;
+            radius = newToken.GetProperty<Int32Property>(nameof(radius)).Value;
+            // TODO
+            radius = Math.Abs(radius);
+
+            color = ColorBgra.FromOpaqueInt32(
+                newToken.GetProperty<Int32Property>(nameof(color)).Value);
+
+            smoothingMode = newToken.GetProperty<BooleanProperty>(nameof(smoothingMode)).Value
+                ? SmoothingMode.AntiAlias : SmoothingMode.Default;
         }
     }
 }

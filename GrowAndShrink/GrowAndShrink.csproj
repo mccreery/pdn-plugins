@@ -26,6 +26,7 @@
         <Compile Include="Properties\AssemblyInfo.cs"/>
         <Compile Include="GrowAndShrinkProperties.cs"/>
         <Compile Include="GrowAndShrinkRender.cs"/>
+        <Compile Include="Kernel.cs"/>
 
         <EmbeddedResource Include="icon.png">
             <LogicalName>$(RootNamespace).GrowAndShrink.icon.png</LogicalName>
