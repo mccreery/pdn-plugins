@@ -10,8 +10,6 @@ namespace AssortedPlugins.GrowAndShrink
     {
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
         {
-            if(radius == 0) { return; }
-
             Kernel kernel = GetKernel();
             int endIndex = startIndex + length;
 
@@ -23,6 +21,12 @@ namespace AssortedPlugins.GrowAndShrink
 
         private void Render(Surface dst, Surface src, Rectangle rect, Kernel kernel)
         {
+            if(radius == 0)
+            {
+                dst.CopySurface(src, rect.Location, rect);
+                return;
+            }
+
             for(int y = rect.Top; y < rect.Bottom; y++)
             {
                 if(IsCancelRequested) { return; }
