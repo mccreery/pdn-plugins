@@ -72,12 +72,8 @@ namespace AssortedPlugins.GrowAndShrink
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
 
             radius = newToken.GetProperty<Int32Property>(nameof(radius)).Value;
-            // TODO
-            radius = Math.Abs(radius);
-
             color = ColorBgra.FromOpaqueInt32(
                 newToken.GetProperty<Int32Property>(nameof(color)).Value);
-
             smoothingMode = newToken.GetProperty<BooleanProperty>(nameof(smoothingMode)).Value
                 ? SmoothingMode.AntiAlias : SmoothingMode.Default;
         }

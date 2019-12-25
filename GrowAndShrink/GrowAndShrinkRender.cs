@@ -33,7 +33,7 @@ namespace AssortedPlugins.GrowAndShrink
                 for(int x = rect.Left; x < rect.Right; x++)
                 {
                     ColorBgra blendedColor = ColorBgra.Blend(color, src[x, y], src[x, y].A);
-                    byte alpha = kernel.WeightedMaxAlpha(src, x, y);
+                    byte alpha = kernel.WeightedExtremeAlpha(src, x, y, radius < 0);
 
                     dst[x, y] = blendedColor.NewAlpha(alpha);
                 }
@@ -42,7 +42,7 @@ namespace AssortedPlugins.GrowAndShrink
 
         private Kernel GetKernel()
         {
-            int size = radius*2 + 1;
+            int size = Math.Abs(radius)*2 + 1;
 
             Bitmap bitmap = new Bitmap(size, size);
             Graphics g = Graphics.FromImage(bitmap);
