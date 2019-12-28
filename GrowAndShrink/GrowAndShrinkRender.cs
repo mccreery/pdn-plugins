@@ -39,22 +39,23 @@ namespace AssortedPlugins.GrowAndShrink
             Rectangle influenceBounds = rect.Inflate(influenceMargin);
             influenceBounds.Intersect(src.Bounds);
 
-            Region region = new Region();
+            BitMask mask = new BitMask(rect.Size);
+            BitMask kernelMask = new BitMask(kernel.Size);
+            kernelMask.Complement();
 
             foreach (Point point in Points(influenceBounds))
             {
                 byte a = src[point].A;
                 if (a != 0 && a != 255)
                 {
-                    Rectangle neighborhood = new Rectangle(point - (Size)kernel.Anchor, kernel.Size);
-                    region.Union(neighborhood);
+                    mask.Add(kernelMask, point - (Size)kernel.Anchor);
                 }
             }
-            region.Intersect(rect);
 
+            IEnumerator<bool> maskEnumerator = mask.GetEnumerator();
             foreach (Point point in Points(rect))
             {
-                if (region.IsVisible(point))
+                if (maskEnumerator.MoveNext())
                 {
                     UpdatePixel(point.X, point.Y);
                 }
