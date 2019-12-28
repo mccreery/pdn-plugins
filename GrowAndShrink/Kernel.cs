@@ -1,24 +1,25 @@
+using PaintDotNet;
 using System;
 using System.Drawing;
-using PaintDotNet;
 
 namespace AssortedPlugins.GrowAndShrink
 {
     public class Kernel
     {
-        private readonly Size size;
-        private readonly Point anchor;
+        public Point Anchor { get; }
+        public Size Size { get; }
+
         private readonly double[,] kernelAlpha;
 
         public Kernel(Bitmap image)
         {
-            size = image.Size;
-            anchor = new Point(image.Width / 2, image.Height / 2);
+            Size = image.Size;
+            Anchor = new Point(image.Width / 2, image.Height / 2);
 
             kernelAlpha = new double[image.Height, image.Width];
-            for(int y = 0; y < image.Height; y++)
+            for (int y = 0; y < image.Height; y++)
             {
-                for(int x = 0; x < image.Width; x++)
+                for (int x = 0; x < image.Width; x++)
                 {
                     kernelAlpha[y, x] = image.GetPixel(x, y).A / 255.0;
                 }
@@ -27,13 +28,13 @@ namespace AssortedPlugins.GrowAndShrink
 
         public byte WeightedExtremeAlpha(Surface surface, int x, int y, bool min)
         {
-            x -= anchor.X;
-            y -= anchor.Y;
+            x -= Anchor.X;
+            y -= Anchor.Y;
 
             byte maxAlpha = 0;
-            for(int yOffset = 0; yOffset < size.Height; yOffset++)
+            for(int yOffset = 0; yOffset < Size.Height; yOffset++)
             {
-                for(int xOffset = 0; xOffset < size.Width; xOffset++)
+                for(int xOffset = 0; xOffset < Size.Width; xOffset++)
                 {
                     byte alpha = surface.GetPointZeroPad(x + xOffset, y + yOffset).A;
 

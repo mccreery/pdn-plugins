@@ -1,8 +1,8 @@
+using PaintDotNet;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
-using PaintDotNet;
 
 namespace AssortedPlugins.GrowAndShrink
 {
@@ -13,7 +13,7 @@ namespace AssortedPlugins.GrowAndShrink
             Kernel kernel = GetKernel();
             int endIndex = startIndex + length;
 
-            for(int i = startIndex; i < endIndex; i++)
+            for (int i = startIndex; i < endIndex; i++)
             {
                 Render(DstArgs.Surface, SrcArgs.Surface, renderRects[i], kernel);
             }
@@ -21,28 +21,53 @@ namespace AssortedPlugins.GrowAndShrink
 
         private void Render(Surface dst, Surface src, Rectangle rect, Kernel kernel)
         {
-            if(radius == 0)
+            if (radius == 0)
             {
                 dst.CopySurface(src, rect.Location, rect);
                 return;
             }
 
-            for(int y = rect.Top; y < rect.Bottom; y++)
+            void UpdatePixel(int x, int y)
             {
-                if(IsCancelRequested) { return; }
-                for(int x = rect.Left; x < rect.Right; x++)
-                {
-                    ColorBgra blendedColor = ColorBgra.Blend(color, src[x, y], src[x, y].A);
-                    byte alpha = kernel.WeightedExtremeAlpha(src, x, y, radius < 0);
+                ColorBgra blendedColor = ColorBgra.Blend(color, src[x, y], src[x, y].A);
+                byte alpha = kernel.WeightedExtremeAlpha(src, x, y, radius < 0);
 
-                    dst[x, y] = blendedColor.NewAlpha(alpha);
+                dst[x, y] = blendedColor.NewAlpha(alpha);
+            }
+
+            Rectangle influenceMargin = new Rectangle(kernel.Anchor.Negate(), kernel.Size);
+            Rectangle influenceBounds = rect.Inflate(influenceMargin);
+            influenceBounds.Intersect(src.Bounds);
+
+            Region region = new Region();
+
+            foreach (Point point in Points(influenceBounds))
+            {
+                byte a = src[point].A;
+                if (a != 0 && a != 255)
+                {
+                    Rectangle neighborhood = new Rectangle(point - (Size)kernel.Anchor, kernel.Size);
+                    region.Union(neighborhood);
+                }
+            }
+            region.Intersect(rect);
+
+            foreach (Point point in Points(rect))
+            {
+                if (region.IsVisible(point))
+                {
+                    UpdatePixel(point.X, point.Y);
+                }
+                else
+                {
+                    dst[point] = src[point];
                 }
             }
         }
 
         private Kernel GetKernel()
         {
-            int size = Math.Abs(radius)*2 + 1;
+            int size = Math.Abs(radius) * 2 + 1;
 
             Bitmap bitmap = new Bitmap(size, size);
             Graphics g = Graphics.FromImage(bitmap);
@@ -51,6 +76,18 @@ namespace AssortedPlugins.GrowAndShrink
             g.PixelOffsetMode = PixelOffsetMode.Half;
             g.FillEllipse(Brushes.Black, 0, 0, bitmap.Width, bitmap.Height);
             return new Kernel(bitmap);
+        }
+
+        private IEnumerable<Point> Points(Rectangle rect)
+        {
+            for (int y = rect.Top; y < rect.Bottom; y++)
+            {
+                if (IsCancelRequested) yield break;
+                for (int x = rect.Left; x < rect.Right; x++)
+                {
+                    yield return new Point(x, y);
+                }
+            }
         }
     }
 }
