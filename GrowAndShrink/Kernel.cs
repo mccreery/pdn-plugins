@@ -9,19 +9,21 @@ namespace AssortedPlugins.GrowAndShrink
         public Point Anchor { get; }
         public Size Size { get; }
 
-        private readonly double[,] kernelAlpha;
+        // Stores 0 for transparent pixels and 255 for opaque ones
+        private readonly byte[,] mask;
 
         public Kernel(Bitmap image)
         {
             Size = image.Size;
             Anchor = new Point(image.Width / 2, image.Height / 2);
 
-            kernelAlpha = new double[image.Height, image.Width];
+            mask = new byte[image.Height, image.Width];
             for (int y = 0; y < image.Height; y++)
             {
                 for (int x = 0; x < image.Width; x++)
                 {
-                    kernelAlpha[y, x] = image.GetPixel(x, y).A / 255.0;
+                    // Trick to replace all values < 128 to 0, and >= 128 to 255
+                    mask[y, x] = (byte)((sbyte)image.GetPixel(x, y).A >> 7);
                 }
             }
         }
@@ -50,7 +52,10 @@ namespace AssortedPlugins.GrowAndShrink
                     {
                         alpha = (byte)(255 - alpha);
                     }
-                    alpha = (byte)Math.Round(alpha * kernelAlpha[i - y, j - x]);
+
+                    // Exclude pixels not in kernel
+                    alpha &= mask[i - y, j - x];
+
                     maxAlpha = Math.Max(maxAlpha, alpha);
 
                     // Short circuit case - we can't get any more opaque
