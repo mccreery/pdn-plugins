@@ -48,7 +48,7 @@ namespace AssortedPlugins.GrowAndShrink
                 byte a = src[point].A;
                 if (a != 0 && a != 255)
                 {
-                    mask.Add(kernelMask, point - (Size)kernel.Anchor);
+                    mask.Add(kernelMask, point - (Size)kernel.Anchor - (Size)rect.Location);
                 }
             }
 
