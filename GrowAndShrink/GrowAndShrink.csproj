@@ -28,6 +28,7 @@
         <Compile Include="GrowAndShrinkRender.cs"/>
         <Compile Include="Kernel.cs"/>
         <Compile Include="Extensions.cs"/>
+        <Compile Include="BinaryMask.cs"/>
 
         <EmbeddedResource Include="icon.png">
             <LogicalName>$(RootNamespace).GrowAndShrink.icon.png</LogicalName>
