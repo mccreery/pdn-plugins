@@ -1,10 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 
 namespace AssortedPlugins
 {
-    class BitMask
+    public class BitMask : IEnumerable<bool>
     {
         private BitShiftCache bitShiftCache;
         public Size Size { get; }
@@ -31,16 +32,34 @@ namespace AssortedPlugins
             for (int y = 0; y < Size.Height; y++)
             {
                 int x, rowIndex;
+
                 for (x = 0, rowIndex = 0; x + 8 <= Size.Width; x += 8, rowIndex++)
                 {
-                    byte a = data[y, rowIndex];
-                    byte mask = (byte)0x80u;
-
-                    for (int i = 0; i < 8; i++, mask >>= 1)
+                    foreach (bool bit in Bits(data[y, rowIndex]))
                     {
-                        yield return (a & mask) != 0;
+                        yield return bit;
                     }
                 }
+
+                foreach (bool bit in Bits(data[y, rowIndex], Size.Width - x))
+                {
+                    yield return bit;
+                }
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        private IEnumerable<bool> Bits(byte x, int bits = 8)
+        {
+            byte lowMask = (byte)(1u << (8 - bits));
+
+            for (byte mask = (byte)0x80u; mask >= lowMask; mask >>= 1)
+            {
+                yield return (x & mask) != 0;
             }
         }
 
