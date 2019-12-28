@@ -31,45 +31,44 @@ namespace AssortedPlugins.GrowAndShrink
             x -= Anchor.X;
             y -= Anchor.Y;
 
+            // Precalculate bounds inside the surface
+            int minY = Math.Max(y, 0);
+            int maxY = Math.Min(y + Size.Height, surface.Height);
+
+            int minX = Math.Max(x, 0);
+            int maxX = Math.Min(x + Size.Width, surface.Width);
+
             byte maxAlpha = 0;
-            for(int yOffset = 0; yOffset < Size.Height; yOffset++)
+            for (int i = minY; i < maxY; i++)
             {
-                for(int xOffset = 0; xOffset < Size.Width; xOffset++)
+                for (int j = minX; j < maxX; j++)
                 {
-                    byte alpha = surface.GetPointZeroPad(x + xOffset, y + yOffset).A;
+                    byte alpha = surface[j, i].A;
 
                     // Treat transparent pixels as opaque
-                    if(min)
+                    if (min)
                     {
                         alpha = (byte)(255 - alpha);
                     }
-                    alpha = (byte)Math.Round(alpha * kernelAlpha[yOffset, xOffset]);
+                    alpha = (byte)Math.Round(alpha * kernelAlpha[i - y, j - x]);
                     maxAlpha = Math.Max(maxAlpha, alpha);
 
                     // Short circuit case - we can't get any more opaque
-                    if(maxAlpha == 255)
+                    if (maxAlpha == 255)
                     {
                         // hehe
                         goto Short;
                     }
                 }
             }
-Short:
+        Short:
             // Treat transparent pixels as transparent again
             // Equivalently can be done inside the loop and using Math.Min
-            if(min)
+            if (min)
             {
                 maxAlpha = (byte)(255 - maxAlpha);
             }
             return maxAlpha;
-        }
-    }
-
-    public static class SurfaceExtensions
-    {
-        public static ColorBgra GetPointZeroPad(this Surface surface, int x, int y)
-        {
-            return surface.Bounds.Contains(x, y) ? surface[x, y] : ColorBgra.TransparentBlack;
         }
     }
 }
