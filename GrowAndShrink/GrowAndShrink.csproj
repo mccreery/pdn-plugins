@@ -6,6 +6,7 @@
         <DefineConstants>TRACE</DefineConstants>
         <RootNamespace>AssortedPlugins</RootNamespace>
         <OutputType>Library</OutputType>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

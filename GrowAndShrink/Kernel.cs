@@ -28,7 +28,7 @@ namespace AssortedPlugins.GrowAndShrink
             }
         }
 
-        public byte WeightedExtremeAlpha(Surface surface, int x, int y, bool min)
+        public unsafe byte WeightedExtremeAlpha(Surface surface, int x, int y, bool min)
         {
             x -= Anchor.X;
             y -= Anchor.Y;
@@ -43,9 +43,11 @@ namespace AssortedPlugins.GrowAndShrink
             byte maxAlpha = 0;
             for (int i = minY; i < maxY; i++)
             {
-                for (int j = minX; j < maxX; j++)
+                ColorBgra* pixel = surface.GetPointAddressUnchecked(minX, i);
+
+                for (int j = minX; j < maxX; j++, pixel++)
                 {
-                    byte alpha = surface[j, i].A;
+                    byte alpha = pixel->A;
 
                     // Treat transparent pixels as opaque
                     if (min)
