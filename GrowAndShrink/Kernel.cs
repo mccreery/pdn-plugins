@@ -12,20 +12,21 @@ namespace AssortedPlugins.GrowAndShrink
         public Rectangle Bounds => new Rectangle(Anchor.Negate(), Size);
 
         // Stores 0 for transparent pixels and 255 for opaque ones
-        private readonly byte[,] mask;
+        private readonly byte[][] mask;
 
         public Kernel(Bitmap image)
         {
             Size = image.Size;
             Anchor = new Point(image.Width / 2, image.Height / 2);
 
-            mask = new byte[image.Height, image.Width];
+            mask = new byte[image.Height][];
             for (int y = 0; y < image.Height; y++)
             {
+                byte[] row = mask[y] = new byte[image.Width];
                 for (int x = 0; x < image.Width; x++)
                 {
                     // Trick to replace all values < 128 to 0, and >= 128 to 255
-                    mask[y, x] = (byte)((sbyte)image.GetPixel(x, y).A >> 7);
+                    row[x] = (byte)((sbyte)image.GetPixel(x, y).A >> 7);
                 }
             }
         }
@@ -46,6 +47,7 @@ namespace AssortedPlugins.GrowAndShrink
             for (int i = minY; i < maxY; i++)
             {
                 ColorBgra* pixel = surface.GetPointAddressUnchecked(minX, i);
+                byte[] row = mask[i - y];
 
                 for (int j = minX; j < maxX; j++, pixel++)
                 {
@@ -58,7 +60,7 @@ namespace AssortedPlugins.GrowAndShrink
                     }
 
                     // Exclude pixels not in kernel
-                    alpha &= mask[i - y, j - x];
+                    alpha &= row[j - x];
 
                     maxAlpha = Math.Max(maxAlpha, alpha);
 
