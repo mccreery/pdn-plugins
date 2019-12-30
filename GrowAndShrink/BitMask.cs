@@ -5,129 +5,100 @@ using System.Drawing;
 
 namespace AssortedPlugins
 {
-    public class BitMask : IEnumerable<bool>
+    public class BitMask : IEnumerable<(Point, bool)>
     {
-        private BitShiftCache bitShiftCache;
-        public Size Size { get; }
+        public Rectangle Bounds { get; }
 
-        // Masks for the end of the row
-        private readonly int maskRowIndex;
-        private readonly byte mask;
+        private byte[][] data;
 
-        public BitMask(Size size)
+        public BitMask(Rectangle bounds)
         {
-            Size = size;
-            // Round up byte width and add padding byte for shift
-            byte[,] data = new byte[size.Height, ((size.Width + 7) >> 3) + 1];
-            bitShiftCache = new BitShiftCache(data);
+            Bounds = bounds;
 
-            maskRowIndex = data.GetLength(1) - 2;
-            mask = MaskTopBits(size.Width & 7);
+            data = new byte[bounds.Height][];
+            int rowLength = (bounds.Width + 7) >> 3;
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                data[i] = new byte[rowLength];
+            }
         }
 
-        public IEnumerator<bool> GetEnumerator()
+        public bool this[int x, int y]
         {
-            byte[,] data = bitShiftCache.Data;
-
-            for (int y = 0; y < Size.Height; y++)
+            get
             {
-                int x, rowIndex;
+                x -= Bounds.Left;
+                y -= Bounds.Top;
 
-                for (x = 0, rowIndex = 0; x + 8 <= Size.Width; x += 8, rowIndex++)
+                return (data[y][x >> 3] & Bit(x & 7)) != 0;
+            }
+        }
+        public bool this[Point point] => this[point.X, point.Y];
+
+        public IEnumerator<(Point, bool)> GetEnumerator()
+        {
+            for (int y = Bounds.Top; y < Bounds.Bottom; y++)
+            {
+                byte[] row = data[y - Bounds.Top];
+
+                for (int i = 0, x = Bounds.Left; x < Bounds.Right; i++)
                 {
-                    foreach (bool bit in Bits(data[y, rowIndex]))
+                    byte chunk = row[i];
+                    int n = Math.Min(Bounds.Right - x, 8);
+
+                    for (int j = 0; j < n; j++, x++)
                     {
-                        yield return bit;
-                    }
-                }
-
-                foreach (bool bit in Bits(data[y, rowIndex], Size.Width - x))
-                {
-                    yield return bit;
-                }
-            }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        private IEnumerable<bool> Bits(byte x, int bits = 8)
-        {
-            byte lowMask = (byte)(1u << (8 - bits));
-
-            for (byte mask = (byte)0x80u; mask >= lowMask; mask >>= 1)
-            {
-                yield return (x & mask) != 0;
-            }
-        }
-
-        public void Complement()
-        {
-            byte[,] data = bitShiftCache.Data;
-
-            for (int i = 0; i < data.GetLength(0); i++)
-            {
-                for (int j = 0; j < data.GetLength(1); j++)
-                {
-                    data[i, j] = (byte)~data[i, j];
-                }
-            }
-            bitShiftCache.Invalidate();
-            Clamp();
-        }
-
-        public void Add(BitMask mask, Point offset)
-        {
-            byte[,] data = bitShiftCache.Data;
-            byte[,] shiftedMaskData = mask.bitShiftCache[offset.X & 7];
-
-            int offsetRowIndex = offset.X >> 3;
-
-            int yMin = Math.Max(offset.Y, 0);
-            int yMax = Math.Min(offset.Y + shiftedMaskData.GetLength(0), data.GetLength(0));
-
-            int xMin = Math.Max(offsetRowIndex, 0);
-            int xMax = Math.Min(offsetRowIndex + shiftedMaskData.GetLength(1), data.GetLength(1));
-
-            for (int y = yMin; y < yMax; y++)
-            {
-                for (int x = xMin; x < xMax; x++)
-                {
-                    data[y, x] |= shiftedMaskData[y - offset.Y, x - offsetRowIndex];
-                }
-            }
-            bitShiftCache.Invalidate();
-            Clamp();
-        }
-
-        private void Clamp()
-        {
-            if (mask != 0xffu)
-            {
-                byte[,] data = bitShiftCache.Data;
-
-                for (int i = 0; i < data.GetLength(0); i++)
-                {
-                    data[i, maskRowIndex] &= mask;
-                    for (int j = maskRowIndex + 1; j < data.GetLength(1); j++)
-                    {
-                        data[i, j] = 0;
+                        yield return (new Point(x, y), (chunk & Bit(j)) != 0);
                     }
                 }
             }
-            bitShiftCache.Invalidate();
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        public void MarkRect(Rectangle rect)
+        {
+            rect.Intersect(Bounds);
+            rect.Location -= (Size)Bounds.Location;
+
+            int loByte;
+            byte[] rowData = GetRowData(rect.Left, rect.Right, out loByte);
+
+            for (int y = rect.Top; y < rect.Bottom; y++)
+            {
+                byte[] row = data[y];
+                for (int i = 0; i < rowData.Length; i++)
+                {
+                    row[loByte + i] |= rowData[i];
+                }
+            }
         }
 
-        private static byte MaskBottomBits(int n)
+        private static byte[] GetRowData(int left, int right, out int loByte)
         {
-            return (byte)((1u << n) - 1);
+            loByte = left >> 3;
+            if (left >= right)
+            {
+                return new byte[0];
+            }
+            int hiByte = (right - 1) >> 3;
+
+            byte[] rowData = new byte[hiByte - loByte + 1];
+            for (int i = 0; i < rowData.Length; i++)
+            {
+                rowData[i] = 0xff;
+            }
+
+            if ((right & 7) != 0)
+            {
+                rowData[rowData.Length - 1] = LoBits(right & 7);
+            }
+            rowData[0] ^= LoBits(left & 7);
+
+            return rowData;
         }
 
-        private static byte MaskTopBits(int n)
-        {
-            return (byte)~MaskBottomBits(8 - n);
-        }
+        private static byte Bit(int n) => (byte)(1 << n);
+        private static byte LoBits(int n) => (byte)(Bit(n) - 1);
     }
 }

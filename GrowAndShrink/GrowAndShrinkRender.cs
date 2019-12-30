@@ -39,30 +39,24 @@ namespace AssortedPlugins.GrowAndShrink
             Rectangle influenceBounds = rect.Inflate(influenceMargin);
             influenceBounds.Intersect(src.Bounds);
 
-            BitMask mask = new BitMask(rect.Size);
-            BitMask kernelMask = new BitMask(kernel.Size);
-            kernelMask.Complement();
+            BitMask mask = new BitMask(rect);
+            Point point = new Point();
 
-            foreach (Point point in Points(influenceBounds))
+            for (point.Y = influenceBounds.Top; point.Y < influenceBounds.Bottom; point.Y++)
             {
-                byte a = src[point].A;
-                if (a != 0 && a != 255)
+                for(point.X = influenceBounds.Left; point.X < influenceBounds.Right; point.X++)
                 {
-                    mask.Add(kernelMask, point - (Size)kernel.Anchor - (Size)rect.Location);
+                    byte a = src[point].A;
+                    if(a != 0 && a != 255)
+                    {
+                        mask.MarkRect(new Rectangle(point - (Size)kernel.Anchor, kernel.Size));
+                    }
                 }
             }
 
-            IEnumerator<bool> maskEnumerator = mask.GetEnumerator();
-            foreach (Point point in Points(rect))
+            foreach ((Point p, bool marked) in mask)
             {
-                if (maskEnumerator.MoveNext())
-                {
-                    UpdatePixel(point.X, point.Y);
-                }
-                else
-                {
-                    dst[point] = src[point];
-                }
+                dst[p] = marked ? ColorBgra.Black : ColorBgra.TransparentBlack;
             }
         }
 
@@ -77,18 +71,6 @@ namespace AssortedPlugins.GrowAndShrink
             g.PixelOffsetMode = PixelOffsetMode.Half;
             g.FillEllipse(Brushes.Black, 0, 0, bitmap.Width, bitmap.Height);
             return new Kernel(bitmap);
-        }
-
-        private IEnumerable<Point> Points(Rectangle rect)
-        {
-            for (int y = rect.Top; y < rect.Bottom; y++)
-            {
-                if (IsCancelRequested) yield break;
-                for (int x = rect.Left; x < rect.Right; x++)
-                {
-                    yield return new Point(x, y);
-                }
-            }
         }
     }
 }
