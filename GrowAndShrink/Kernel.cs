@@ -9,6 +9,8 @@ namespace AssortedPlugins.GrowAndShrink
         public Point Anchor { get; }
         public Size Size { get; }
 
+        public Rectangle Bounds => new Rectangle(Anchor.Negate(), Size);
+
         // Stores 0 for transparent pixels and 255 for opaque ones
         private readonly byte[,] mask;
 

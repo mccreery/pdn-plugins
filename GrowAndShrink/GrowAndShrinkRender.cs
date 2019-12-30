@@ -27,37 +27,45 @@ namespace AssortedPlugins.GrowAndShrink
                 return;
             }
 
-            void UpdatePixel(int x, int y)
-            {
-                ColorBgra blendedColor = ColorBgra.Blend(color, src[x, y], src[x, y].A);
-                byte alpha = kernel.WeightedExtremeAlpha(src, x, y, radius < 0);
+            BitMask mask = GetMask(src, rect, kernel);
 
-                dst[x, y] = blendedColor.NewAlpha(alpha);
+            foreach ((Point point, bool marked) in mask)
+            {
+                if (marked)
+                {
+                    ColorBgra dstColor = src[point];
+                    dstColor = ColorBgra.Blend(color, dstColor, dstColor.A);
+
+                    byte alpha = kernel.WeightedExtremeAlpha(src, point.X, point.Y, radius < 0);
+
+                    dst[point] = dstColor.NewAlpha(alpha);
+                }
+                else
+                {
+                    dst[point] = src[point];
+                }
             }
+        }
 
-            Rectangle influenceMargin = new Rectangle(kernel.Anchor.Negate(), kernel.Size);
-            Rectangle influenceBounds = rect.Inflate(influenceMargin);
-            influenceBounds.Intersect(src.Bounds);
-
+        private BitMask GetMask(Surface src, Rectangle rect, Kernel kernel)
+        {
             BitMask mask = new BitMask(rect);
-            Point point = new Point();
+            Rectangle influence = rect.Inflate(kernel.Bounds);
+            influence.Intersect(src.Bounds);
 
-            for (point.Y = influenceBounds.Top; point.Y < influenceBounds.Bottom; point.Y++)
+            Point point = new Point();
+            for (point.Y = influence.Top; point.Y < influence.Bottom; point.Y++)
             {
-                for(point.X = influenceBounds.Left; point.X < influenceBounds.Right; point.X++)
+                for (point.X = influence.Left; point.X < influence.Right; point.X++)
                 {
                     byte a = src[point].A;
-                    if(a != 0 && a != 255)
+                    if (a != 0 && a != 255)
                     {
                         mask.MarkRect(new Rectangle(point - (Size)kernel.Anchor, kernel.Size));
                     }
                 }
             }
-
-            foreach ((Point p, bool marked) in mask)
-            {
-                dst[p] = marked ? ColorBgra.Black : ColorBgra.TransparentBlack;
-            }
+            return mask;
         }
 
         private Kernel GetKernel()
