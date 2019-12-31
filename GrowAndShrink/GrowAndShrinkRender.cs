@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using static PaintDotNet.UserBlendOps;
 
 namespace AssortedPlugins.GrowAndShrink
 {
@@ -34,10 +35,10 @@ namespace AssortedPlugins.GrowAndShrink
                 if (marked)
                 {
                     ColorBgra dstColor = src[point];
-                    dstColor = ColorBgra.Blend(color, dstColor, dstColor.A);
+                    dstColor = NormalBlendOp.ApplyStatic(color, dstColor);
 
                     byte alpha = kernel.ExtremeAlpha(src, point, radius < 0);
-                    dst[point] = dstColor.NewAlpha(alpha);
+                    dst[point] = dstColor.NewAlpha((byte)(dstColor.A * alpha / 255));
                 }
                 else
                 {
@@ -76,7 +77,6 @@ namespace AssortedPlugins.GrowAndShrink
             Bitmap bitmap = new Bitmap(size, size);
             Graphics g = Graphics.FromImage(bitmap);
 
-            g.SmoothingMode = smoothingMode;
             g.PixelOffsetMode = PixelOffsetMode.Half;
             g.FillEllipse(Brushes.Black, 0, 0, bitmap.Width, bitmap.Height);
             return new Kernel(bitmap);

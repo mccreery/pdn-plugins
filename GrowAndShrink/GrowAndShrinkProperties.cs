@@ -15,7 +15,6 @@ namespace AssortedPlugins.GrowAndShrink
     {
         private int radius;
         private ColorBgra color;
-        private SmoothingMode smoothingMode;
 
         public GrowAndShrinkEffect() : base(
                 typeof(GrowAndShrinkEffect).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
@@ -32,14 +31,8 @@ namespace AssortedPlugins.GrowAndShrink
             configUI.SetPropertyControlType(nameof(radius), PropertyControlType.Slider);
             configUI.SetPropertyControlValue(nameof(radius), ControlInfoPropertyNames.DisplayName, "Radius");
 
-            configUI.SetPropertyControlType(nameof(color),
-                PropertyControlType.ColorWheel);
-            configUI.SetPropertyControlValue(nameof(color),
-                ControlInfoPropertyNames.DisplayName, "Color");
-
-            configUI.SetPropertyControlType(nameof(smoothingMode), PropertyControlType.CheckBox);
-            configUI.SetPropertyControlValue(nameof(smoothingMode), ControlInfoPropertyNames.DisplayName, "");
-            configUI.SetPropertyControlValue(nameof(smoothingMode), ControlInfoPropertyNames.Description, "Antialiasing");
+            configUI.SetPropertyControlType(nameof(color), PropertyControlType.ColorWheel);
+            configUI.SetPropertyControlValue(nameof(color), ControlInfoPropertyNames.DisplayName, "Color");
 
             return configUI;
         }
@@ -50,11 +43,7 @@ namespace AssortedPlugins.GrowAndShrink
             ColorBgra primaryColor = EnvironmentParameters.PrimaryColor;
 
             props.Add(new Int32Property(nameof(radius), 0, -50, 50));
-            props.Add(new Int32Property(nameof(color),
-                ColorBgra.ToOpaqueInt32(primaryColor.NewAlpha(255)),
-                0x000000, 0xffffff));
-
-            props.Add(new BooleanProperty(nameof(smoothingMode), false));
+            props.Add(new Int32Property(nameof(color), (int)(uint)EnvironmentParameters.PrimaryColor));
 
             return new PropertyCollection(props);
         }
@@ -72,10 +61,7 @@ namespace AssortedPlugins.GrowAndShrink
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
 
             radius = newToken.GetProperty<Int32Property>(nameof(radius)).Value;
-            color = ColorBgra.FromOpaqueInt32(
-                newToken.GetProperty<Int32Property>(nameof(color)).Value);
-            smoothingMode = newToken.GetProperty<BooleanProperty>(nameof(smoothingMode)).Value
-                ? SmoothingMode.AntiAlias : SmoothingMode.Default;
+            color = ColorBgra.FromUInt32((uint)newToken.GetProperty<Int32Property>(nameof(color)).Value);
         }
     }
 }
