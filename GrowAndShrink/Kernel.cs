@@ -9,8 +9,12 @@ namespace AssortedPlugins.GrowAndShrink
         /** <value>The kernel's bounding box centered around the origin.</value> */
         public Rectangle Bounds { get; }
 
-        // Bitmask for each pixel (row-major access [y][x])
-        private readonly byte[][] mask;
+        struct Range
+        {
+            public int lo;
+            public int hi;
+        }
+        private Range[] ranges;
 
         public Kernel(Bitmap image)
         {
@@ -21,16 +25,16 @@ namespace AssortedPlugins.GrowAndShrink
                 image.Width,
                 image.Height);
 
-            mask = new byte[Bounds.Height][];
-            for (int y = 0; y < mask.Length; y++)
+            ranges = new Range[Bounds.Height];
+            for (int y = 0; y < ranges.Length; y++)
             {
-                byte[] maskRow = new byte[Bounds.Width];
-                for (int x = 0; x < maskRow.Length; x++)
-                {
-                    // Mostly opaque pixels are included in the mask
-                    maskRow[x] = (byte)(image.GetPixel(x, y).A >= 128 ? 255 : 0);
-                }
-                mask[y] = maskRow;
+                int lo, hi;
+                for (lo = 0; lo < image.Width && image.GetPixel(lo, y).A < 128; lo++) ;
+                for (hi = image.Width; --hi >= 0 && image.GetPixel(hi, y).A < 128;) ;
+                ++hi;
+
+                ranges[y].lo = lo;
+                ranges[y].hi = hi;
             }
         }
 
@@ -47,43 +51,38 @@ namespace AssortedPlugins.GrowAndShrink
             Rectangle rect = Bounds;
             rect.Offset(point);
 
-            // The same bounds after clipping to prevent access to memory outside the surface
-            Rectangle clampedRect = rect;
-            clampedRect.Intersect(surface.Bounds);
+            // Avoid repeating min/max inside and outside the loop
+            int top = Math.Max(surface.Bounds.Top, rect.Top);
+            int bottom = Math.Min(surface.Bounds.Bottom, rect.Bottom);
 
             byte maxAlpha = 0;
-            for (int y = clampedRect.Top; y < clampedRect.Bottom; y++)
+            for (int y = top; y < bottom; y++)
             {
                 // Unsafe surface access is more efficient
                 ColorBgra* rowPtr = surface.GetRowAddressUnchecked(y);
-                byte[] maskRow = mask[y - rect.Top];
 
-                for (int x = clampedRect.Left; x < clampedRect.Right; x++)
+                Range range = ranges[y - rect.Top];
+                int left = Math.Max(surface.Bounds.Left, rect.Left + range.lo);
+                int right = Math.Min(surface.Bounds.Right, rect.Left + range.hi);
+
+                for (int x = left; x < right; x++)
                 {
-                    byte alpha = rowPtr[x].A;
-                    // Invert alpha value (first time) to find minimum
-                    if (min)
-                    {
-                        alpha = (byte)~alpha;
-                    }
-                    // Masking has been more efficient while profiling
-                    alpha &= maskRow[x - rect.Left];
+                    // Invert alpha (first time) to find minimum
+                    byte alpha = min ? (byte)~rowPtr[x].A : rowPtr[x].A;
 
-                    maxAlpha = Math.Max(maxAlpha, alpha);
-                    // Shortcut since 255 is the maximum byte value
-                    if (maxAlpha == 255)
+                    if (alpha > maxAlpha)
                     {
-                        goto BreakOuter;
+                        maxAlpha = alpha;
+                        if (maxAlpha == 255)
+                        {
+                            goto BreakOuter;
+                        }
                     }
                 }
             }
         BreakOuter:
-            // Invert alpha value (second time) to find minimum
-            if (min)
-            {
-                maxAlpha = (byte)~maxAlpha;
-            }
-            return maxAlpha;
+            // Invert alpha (second time) to find minimum
+            return min ? (byte)~maxAlpha : maxAlpha;
         }
     }
 }
