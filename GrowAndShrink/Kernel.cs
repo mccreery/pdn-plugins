@@ -6,78 +6,82 @@ namespace AssortedPlugins.GrowAndShrink
 {
     public class Kernel
     {
-        public Point Anchor { get; }
-        public Size Size { get; }
+        /** <value>The kernel's bounding box centered around the origin.</value> */
+        public Rectangle Bounds { get; }
 
-        public Rectangle Bounds => new Rectangle(Anchor.Negate(), Size);
-
-        // Stores 0 for transparent pixels and 255 for opaque ones
+        // Bitmask for each pixel (row-major access [y][x])
         private readonly byte[][] mask;
 
         public Kernel(Bitmap image)
         {
-            Size = image.Size;
-            Anchor = new Point(image.Width / 2, image.Height / 2);
+            // Centered around the origin
+            Bounds = new Rectangle(
+                -image.Width / 2,
+                -image.Height / 2,
+                image.Width,
+                image.Height);
 
-            mask = new byte[image.Height][];
-            for (int y = 0; y < image.Height; y++)
+            mask = new byte[Bounds.Height][];
+            for (int y = 0; y < mask.Length; y++)
             {
-                byte[] row = mask[y] = new byte[image.Width];
-                for (int x = 0; x < image.Width; x++)
+                byte[] maskRow = new byte[Bounds.Width];
+                for (int x = 0; x < maskRow.Length; x++)
                 {
-                    // Trick to replace all values < 128 to 0, and >= 128 to 255
-                    row[x] = (byte)((sbyte)image.GetPixel(x, y).A >> 7);
+                    // Mostly opaque pixels are included in the mask
+                    maskRow[x] = (byte)(image.GetPixel(x, y).A >= 128 ? 255 : 0);
                 }
+                mask[y] = maskRow;
             }
         }
 
-        public unsafe byte WeightedExtremeAlpha(Surface surface, int x, int y, bool min)
+        /**
+         * <summary>Finds the maximum or minimum alpha value in the neighborhood.</summary>
+         * <param name="surface">The surface to search.</param>
+         * <param name="point">The origin of the search, with the neighborhood centered around it.</param>
+         * <param name="min">Set to <c>true</c> to find the minimum alpha instead of maximum.</param>
+         * <returns>The maximum (default) or minimum alpha value in the neighborhood around <paramref name="point"/>.</returns>
+         */
+        public unsafe byte ExtremeAlpha(Surface surface, Point point, bool min = false)
         {
-            x -= Anchor.X;
-            y -= Anchor.Y;
+            // The bounds of the neighborhood relative to the surface
+            Rectangle rect = Bounds;
+            rect.Offset(point);
 
-            // Precalculate bounds inside the surface
-            int minY = Math.Max(y, 0);
-            int maxY = Math.Min(y + Size.Height, surface.Height);
-
-            int minX = Math.Max(x, 0);
-            int maxX = Math.Min(x + Size.Width, surface.Width);
+            // The same bounds after clipping to prevent access to memory outside the surface
+            Rectangle clampedRect = rect;
+            clampedRect.Intersect(surface.Bounds);
 
             byte maxAlpha = 0;
-            for (int i = minY; i < maxY; i++)
+            for (int y = clampedRect.Top; y < clampedRect.Bottom; y++)
             {
-                ColorBgra* pixel = surface.GetPointAddressUnchecked(minX, i);
-                byte[] row = mask[i - y];
+                // Unsafe surface access is more efficient
+                ColorBgra* rowPtr = surface.GetRowAddressUnchecked(y);
+                byte[] maskRow = mask[y - rect.Top];
 
-                for (int j = minX; j < maxX; j++, pixel++)
+                for (int x = clampedRect.Left; x < clampedRect.Right; x++)
                 {
-                    byte alpha = pixel->A;
-
-                    // Treat transparent pixels as opaque
+                    byte alpha = rowPtr[x].A;
+                    // Invert alpha value (first time) to find minimum
                     if (min)
                     {
-                        alpha = (byte)(255 - alpha);
+                        alpha = (byte)~alpha;
                     }
-
-                    // Exclude pixels not in kernel
-                    alpha &= row[j - x];
+                    // Masking has been more efficient while profiling
+                    alpha &= maskRow[x - rect.Left];
 
                     maxAlpha = Math.Max(maxAlpha, alpha);
-
-                    // Short circuit case - we can't get any more opaque
+                    // Shortcut since 255 is the maximum byte value
                     if (maxAlpha == 255)
                     {
-                        // hehe
-                        goto Short;
+                        goto BreakOuter;
                     }
                 }
             }
-        Short:
-            // Treat transparent pixels as transparent again
-            // Equivalently can be done inside the loop and using Math.Min
+        BreakOuter:
+            // Invert alpha value (second time) to find minimum
             if (min)
             {
-                maxAlpha = (byte)(255 - maxAlpha);
+                maxAlpha = (byte)~maxAlpha;
             }
             return maxAlpha;
         }

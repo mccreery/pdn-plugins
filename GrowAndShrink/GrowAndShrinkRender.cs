@@ -36,8 +36,7 @@ namespace AssortedPlugins.GrowAndShrink
                     ColorBgra dstColor = src[point];
                     dstColor = ColorBgra.Blend(color, dstColor, dstColor.A);
 
-                    byte alpha = kernel.WeightedExtremeAlpha(src, point.X, point.Y, radius < 0);
-
+                    byte alpha = kernel.ExtremeAlpha(src, point, radius < 0);
                     dst[point] = dstColor.NewAlpha(alpha);
                 }
                 else
@@ -61,7 +60,9 @@ namespace AssortedPlugins.GrowAndShrink
                     byte a = src[point].A;
                     if (a != 0 && a != 255)
                     {
-                        mask.MarkRect(new Rectangle(point - (Size)kernel.Anchor, kernel.Size));
+                        Rectangle markedRect = kernel.Bounds;
+                        markedRect.Offset(point);
+                        mask.MarkRect(markedRect);
                     }
                 }
             }
