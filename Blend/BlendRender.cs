@@ -28,21 +28,23 @@ namespace AssortedPlugins.Blend
                     ColorBgra srcColor = src[x, y];
                     ColorBgra dstColor = srcColor;
 
-                    if (flags.HasFlag(Flags.Color))
+                    if (blendColor)
                     {
                         dstColor.B = blendFunc(dstColor.B, color.B);
                         dstColor.G = blendFunc(dstColor.G, color.G);
                         dstColor.R = blendFunc(dstColor.R, color.R);
                     }
-                    if (flags.HasFlag(Flags.Alpha))
+                    if (blendAlpha)
                     {
                         dstColor.A = blendFunc(dstColor.A, color.A);
                     }
-                    if (flags.HasFlag(Flags.InterpolateColor))
+                    if (interpolateColor)
                     {
+                        byte a = dstColor.A;
                         dstColor = ColorBgra.Lerp(srcColor, dstColor, ByteUtil.ToScalingFloat(color.A));
+                        dstColor.A = a;
                     }
-                    if (flags.HasFlag(Flags.Underlay))
+                    if (underlay)
                     {
                         dstColor = UserBlendOps.NormalBlendOp.ApplyStatic(color, dstColor);
                     }

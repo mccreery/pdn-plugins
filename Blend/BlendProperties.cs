@@ -17,17 +17,11 @@ namespace AssortedPlugins.Blend
     {
         private ColorBgra color;
         private CompositionOp blendMode;
-        private Flags flags;
 
-        [Flags]
-        private enum Flags
-        {
-            Color = 1,
-            Alpha = 2,
-            InterpolateColor = 4,
-            Underlay = 8
-        }
-        private static readonly Flags[] flagValues = (Flags[])Enum.GetValues(typeof(Flags));
+        private bool blendColor;
+        private bool blendAlpha;
+        private bool interpolateColor;
+        private bool underlay;
 
         public BlendEffect() : base(
                 typeof(BlendEffect).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
@@ -61,17 +55,21 @@ namespace AssortedPlugins.Blend
                 blendModeControl.SetValueDisplayName(blendOption.EnumValue, blendOption.LocalizedName);
             }
 
-            foreach (Flags flag in flagValues)
-            {
-                configUI.SetPropertyControlType(flag, PropertyControlType.CheckBox);
-                configUI.SetPropertyControlValue(flag, ControlInfoPropertyNames.DisplayName, "");
-            }
-            configUI.SetPropertyControlValue(Flags.Color, ControlInfoPropertyNames.DisplayName, "Components");
-            configUI.SetPropertyControlValue(Flags.Color, ControlInfoPropertyNames.Description, "Color");
-            configUI.SetPropertyControlValue(Flags.Alpha, ControlInfoPropertyNames.Description, "Alpha");
-            configUI.SetPropertyControlValue(Flags.InterpolateColor, ControlInfoPropertyNames.DisplayName, "Options");
-            configUI.SetPropertyControlValue(Flags.InterpolateColor, ControlInfoPropertyNames.Description, "Interpolate color");
-            configUI.SetPropertyControlValue(Flags.Underlay, ControlInfoPropertyNames.Description, "Underlay");
+            configUI.SetPropertyControlType(nameof(blendColor), PropertyControlType.CheckBox);
+            configUI.SetPropertyControlValue(nameof(blendColor), ControlInfoPropertyNames.DisplayName, "Components");
+            configUI.SetPropertyControlValue(nameof(blendColor), ControlInfoPropertyNames.Description, "Color");
+
+            configUI.SetPropertyControlType(nameof(blendAlpha), PropertyControlType.CheckBox);
+            configUI.SetPropertyControlValue(nameof(blendAlpha), ControlInfoPropertyNames.DisplayName, "");
+            configUI.SetPropertyControlValue(nameof(blendAlpha), ControlInfoPropertyNames.Description, "Alpha");
+
+            configUI.SetPropertyControlType(nameof(interpolateColor), PropertyControlType.CheckBox);
+            configUI.SetPropertyControlValue(nameof(interpolateColor), ControlInfoPropertyNames.DisplayName, "Options");
+            configUI.SetPropertyControlValue(nameof(interpolateColor), ControlInfoPropertyNames.Description, "Interpolate color");
+
+            configUI.SetPropertyControlType(nameof(underlay), PropertyControlType.CheckBox);
+            configUI.SetPropertyControlValue(nameof(underlay), ControlInfoPropertyNames.DisplayName, "");
+            configUI.SetPropertyControlValue(nameof(underlay), ControlInfoPropertyNames.Description, "Underlay");
 
             return configUI;
         }
@@ -83,10 +81,10 @@ namespace AssortedPlugins.Blend
             props.Add(new Int32Property(nameof(color), (int)(uint)EnvironmentParameters.PrimaryColor));
             props.Add(StaticListChoiceProperty.CreateForEnum(nameof(blendMode), LayerBlendMode.Multiply));
 
-            foreach (Flags flag in flagValues)
-            {
-                props.Add(new BooleanProperty(flag));
-            }
+            props.Add(new BooleanProperty(nameof(blendColor)));
+            props.Add(new BooleanProperty(nameof(blendAlpha)));
+            props.Add(new BooleanProperty(nameof(interpolateColor)));
+            props.Add(new BooleanProperty(nameof(underlay)));
 
             return new PropertyCollection(props);
         }
@@ -107,14 +105,10 @@ namespace AssortedPlugins.Blend
             blendMode = LayerBlendModeUtil.CreateCompositionOp(
                 (LayerBlendMode)newToken.GetProperty<StaticListChoiceProperty>(nameof(blendMode)).Value);
 
-            flags = 0;
-            foreach (Flags flag in flagValues)
-            {
-                if (newToken.GetProperty<BooleanProperty>(flag).Value)
-                {
-                    flags |= flag;
-                }
-            }
+            blendColor = newToken.GetProperty<BooleanProperty>(nameof(blendColor)).Value;
+            blendAlpha= newToken.GetProperty<BooleanProperty>(nameof(blendAlpha)).Value;
+            interpolateColor = newToken.GetProperty<BooleanProperty>(nameof(interpolateColor)).Value;
+            underlay = newToken.GetProperty<BooleanProperty>(nameof(underlay)).Value;
         }
     }
 }
