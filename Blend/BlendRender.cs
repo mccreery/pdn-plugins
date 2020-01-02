@@ -1,7 +1,5 @@
-using System;
-using System.Drawing;
 using PaintDotNet;
-using PaintDotNet.Rendering;
+using System.Drawing;
 
 namespace AssortedPlugins.Blend
 {
@@ -19,7 +17,8 @@ namespace AssortedPlugins.Blend
 
         void Render(Surface dst, Surface src, Rectangle rect)
         {
-            BlendFunc blendFunc = blendMode.GetBlendFunc();
+            BlendFunc blendFunc = this.blendMode.GetBlendFunc();
+            ColorBgra colorOpaque = color.NewAlpha(255);
 
             for (int y = rect.Top; y < rect.Bottom; y++)
             {
@@ -30,9 +29,10 @@ namespace AssortedPlugins.Blend
 
                     if (blendColor)
                     {
-                        dstColor.B = blendFunc(dstColor.B, color.B);
-                        dstColor.G = blendFunc(dstColor.G, color.G);
-                        dstColor.R = blendFunc(dstColor.R, color.R);
+                        byte tempAlpha = dstColor.A;
+                        dstColor.A = 255;
+                        dstColor = blendMode.Apply(dstColor, colorOpaque);
+                        dstColor.A = tempAlpha;
                     }
                     if (blendAlpha)
                     {
