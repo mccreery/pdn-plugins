@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(SolutionDir)Blend\bin\$(Configuration)\Blend.dll" Link="Blend.dll" />
+    <EmbeddedResource Include="$(SolutionDir)GrowAndShrink\bin\$(Configuration)\GrowAndShrink.dll" Link="GrowAndShrink.dll" />
+  </ItemGroup>
+
+</Project>
