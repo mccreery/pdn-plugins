@@ -1,13 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Reflection;
 using PaintDotNet;
 using PaintDotNet.AppModel;
 using PaintDotNet.Effects;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using PaintDotNet.Rendering;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Reflection;
 
 namespace AssortedPlugins.Blend
 {
@@ -15,8 +15,19 @@ namespace AssortedPlugins.Blend
     [EffectCategory(EffectCategory.Adjustment)]
     public partial class BlendEffect : PropertyBasedEffect
     {
-        private CompositionOp blendMode;
         private ColorBgra color;
+        private CompositionOp blendMode;
+        private Flags flags;
+
+        [Flags]
+        private enum Flags
+        {
+            Color = 1,
+            Alpha = 2,
+            InterpolateColor = 4,
+            Underlay = 8
+        }
+        private static readonly Flags[] flagValues = (Flags[])Enum.GetValues(typeof(Flags));
 
         public BlendEffect() : base(
                 typeof(BlendEffect).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
@@ -38,9 +49,11 @@ namespace AssortedPlugins.Blend
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
+            configUI.SetPropertyControlType(nameof(color), PropertyControlType.ColorWheel);
+            configUI.SetPropertyControlValue(nameof(color), ControlInfoPropertyNames.DisplayName, "Color");
+
             configUI.SetPropertyControlType(nameof(blendMode), PropertyControlType.DropDown);
             configUI.SetPropertyControlValue(nameof(blendMode), ControlInfoPropertyNames.DisplayName, "Blend Mode");
-
             // Localize blend mode names
             PropertyControlInfo blendModeControl = configUI.FindControlForPropertyName(nameof(blendMode));
             foreach (ILocalizedEnumValue blendOption in GetLocalizedBlendModes())
@@ -48,11 +61,17 @@ namespace AssortedPlugins.Blend
                 blendModeControl.SetValueDisplayName(blendOption.EnumValue, blendOption.LocalizedName);
             }
 
-            configUI.SetPropertyControlType(nameof(color), PropertyControlType.ColorWheel);
-            configUI.SetPropertyControlValue(nameof(color), ControlInfoPropertyNames.DisplayName, "Color");
-
-            configUI.SetPropertyControlType("alpha", PropertyControlType.Slider);
-            configUI.SetPropertyControlValue("alpha", ControlInfoPropertyNames.DisplayName, "Alpha");
+            foreach (Flags flag in flagValues)
+            {
+                configUI.SetPropertyControlType(flag, PropertyControlType.CheckBox);
+                configUI.SetPropertyControlValue(flag, ControlInfoPropertyNames.DisplayName, "");
+            }
+            configUI.SetPropertyControlValue(Flags.Color, ControlInfoPropertyNames.DisplayName, "Components");
+            configUI.SetPropertyControlValue(Flags.Color, ControlInfoPropertyNames.Description, "Color");
+            configUI.SetPropertyControlValue(Flags.Alpha, ControlInfoPropertyNames.Description, "Alpha");
+            configUI.SetPropertyControlValue(Flags.InterpolateColor, ControlInfoPropertyNames.DisplayName, "Options");
+            configUI.SetPropertyControlValue(Flags.InterpolateColor, ControlInfoPropertyNames.Description, "Interpolate color");
+            configUI.SetPropertyControlValue(Flags.Underlay, ControlInfoPropertyNames.Description, "Underlay");
 
             return configUI;
         }
@@ -60,14 +79,14 @@ namespace AssortedPlugins.Blend
         protected override PropertyCollection OnCreatePropertyCollection()
         {
             List<Property> props = new List<Property>();
-            ColorBgra primaryColor = EnvironmentParameters.PrimaryColor;
 
+            props.Add(new Int32Property(nameof(color), (int)(uint)EnvironmentParameters.PrimaryColor));
             props.Add(StaticListChoiceProperty.CreateForEnum(nameof(blendMode), LayerBlendMode.Multiply));
 
-            props.Add(new Int32Property(nameof(color),
-                ColorBgra.ToOpaqueInt32(primaryColor), 0x000000, 0xffffff));
-
-            props.Add(new Int32Property("alpha", 255, 0, 255));
+            foreach (Flags flag in flagValues)
+            {
+                props.Add(new BooleanProperty(flag));
+            }
 
             return new PropertyCollection(props);
         }
@@ -84,12 +103,18 @@ namespace AssortedPlugins.Blend
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
 
+            color = (ColorBgra)(uint)newToken.GetProperty<Int32Property>(nameof(color)).Value;
             blendMode = LayerBlendModeUtil.CreateCompositionOp(
                 (LayerBlendMode)newToken.GetProperty<StaticListChoiceProperty>(nameof(blendMode)).Value);
 
-            byte alpha = (byte)newToken.GetProperty<Int32Property>(nameof(alpha)).Value;
-            color = ColorBgra.FromOpaqueInt32(newToken.GetProperty<Int32Property>(nameof(color)).Value);
-            color = color.NewAlpha(alpha);
+            flags = 0;
+            foreach (Flags flag in flagValues)
+            {
+                if (newToken.GetProperty<BooleanProperty>(flag).Value)
+                {
+                    flags |= flag;
+                }
+            }
         }
     }
 }
