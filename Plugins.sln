@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29613.14
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.1022
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrowAndShrink", "GrowAndShrink\GrowAndShrink.csproj", "{FF34255E-FAD2-44DB-ADFF-0976CF83CDE1}"
 EndProject
@@ -12,8 +12,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		DefaultPluginInfo.cs = DefaultPluginInfo.cs
 		SharedAssemblyInfo.cs = SharedAssemblyInfo.cs
 	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Template", "Template\Template.csproj", "{D1EB3D37-CFDD-4DF4-82FE-6F1CC5238A44}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +27,6 @@ Global
 		{C68441CB-B950-4499-8846-514C4058D977}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C68441CB-B950-4499-8846-514C4058D977}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C68441CB-B950-4499-8846-514C4058D977}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D1EB3D37-CFDD-4DF4-82FE-6F1CC5238A44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D1EB3D37-CFDD-4DF4-82FE-6F1CC5238A44}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D1EB3D37-CFDD-4DF4-82FE-6F1CC5238A44}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D1EB3D37-CFDD-4DF4-82FE-6F1CC5238A44}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -4,7 +4,6 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D1EB3D37-CFDD-4DF4-82FE-6F1CC5238A44}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AssortedPlugins.Template</RootNamespace>
@@ -32,16 +31,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="PaintDotNet.Base">
-      <HintPath>..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Base.dll</HintPath>
+      <HintPath>C:\Program Files\paint.net\PaintDotNet.Base.dll</HintPath>
     </Reference>
     <Reference Include="PaintDotNet.Core">
-      <HintPath>..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Core.dll</HintPath>
+      <HintPath>C:\Program Files\paint.net\PaintDotNet.Core.dll</HintPath>
     </Reference>
     <Reference Include="PaintDotNet.Data">
-      <HintPath>..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Data.dll</HintPath>
+      <HintPath>C:\Program Files\paint.net\PaintDotNet.Data.dll</HintPath>
     </Reference>
     <Reference Include="PaintDotNet.Effects">
-      <HintPath>..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Effects.dll</HintPath>
+      <HintPath>C:\Program Files\paint.net\PaintDotNet.Effects.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
