@@ -1,18 +1,12 @@
 import argparse, sys, os, uuid
 
 parser = argparse.ArgumentParser(description="Apply a template to a file or directory")
-parser.add_argument("path", default=".")
-parser.add_argument("--var", "-v", dest="vars", nargs=2, action="append")
-parser.add_argument("--guid", const=True, default=False, nargs="?")
+parser.add_argument("path", default=".", help="The path to the root directory or file", metavar="PATH")
+parser.add_argument("--var", "-v", dest="vars", action="append", nargs=2, help="Set a variable for find/replace", metavar=("NAME", "VALUE"))
+parser.add_argument("--guid", dest="vars", action="append_const", const=("guid", str(uuid.uuid4())), help="Set the special \"guid\" variable to a random GUID")
 
 args = parser.parse_args(sys.argv[1:])
-kv = {}
-if args.vars:
-    for var in args.vars:
-        kv[var[0]] = var[1]
-
-if args.guid:
-    kv["guid"] = uuid.uuid4()
+kv = dict(args.vars)
 
 def interpolate_contents(path):
     try:
