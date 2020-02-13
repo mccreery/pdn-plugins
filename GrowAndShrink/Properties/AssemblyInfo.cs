@@ -1,7 +1,8 @@
-using System.Reflection;
-using System.Runtime.InteropServices;
+﻿using System.Reflection;
 
-// See ..\Shared\AssemblyInfo.cs for other attributes
+// See SharedAssemblyInfo.cs for other attributes
 [assembly: AssemblyTitle("Grow/Shrink")]
 [assembly: AssemblyDescription("")]
-[assembly: AssemblyVersion("0.1.*")]
+[assembly: AssemblyVersion("0.1")]
+
+[assembly: AssemblyConfiguration("")]
