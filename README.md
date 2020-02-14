@@ -1,8 +1,30 @@
 # Assorted Plugins for paint.net
-I use VS Code for these plugins, so the `.csproj` and `.sln` files
-may not immediately be compatible with Visual Studio.
+~~I use VS Code~~ The solution and project files are made with Visual Studio
+2019. The VS Code information below is kept in case anyone wants to contribute
+to the project using VS Code. Extra care would have to be taken to avoid
+mangling the `.csproj` and `.sln` files.
 
-## Associated VS Code Plugins
+## Visual Studio
+
+Each plugin copies its built DLL into the paint.net plugins folder on build, so
+Visual Studio needs to be run as administrator for that action to work.
+Otherwise you will have to copy the files yourself each time you build.
+
+### Template
+There is a folder containing a `.vstemplate` file in the `PluginTemplate`
+directory. If you drop a directory junction in the Visual Studio templates
+folder, it will be picked up and updated if the repo ever updates it:
+
+```
+mklink /D "%USERPROFILE%\Documents\Visual Studio 2019\Templates\ProjectTemplates\PluginTemplate" "C:\Path\To\Repo\PluginTemplate"
+```
+
+## VS Code (Legacy)
+
+**Note**: Some information in this section may be out of date. I use Visual
+Studio now.
+
+### Associated VS Code Plugins
 I use these plugins in VS Code for C# and project management purposes. These
 links will open in VS Code (using the `vscode` protocol).
 
@@ -12,7 +34,7 @@ links will open in VS Code (using the `vscode` protocol).
 - [Auto Close Tag](vscode:extension/formulahendry.auto-close-tag) (XML)
 - [XML Tools](vscode:extension/dotjoshjohnson.xml) (XML format)
 
-## Debug Setup
+### Debug Setup
 As far as I know, paint.net doesn't support sideloading plugins, so the easiest
 debug setup is to install the plugin as a symlink:
 
@@ -34,7 +56,7 @@ example in VS Code `launch.json`:
 If your paint.net is installed somewhere else, you'll have to adjust the
 locations of the DLLs in the `.csproj` file.
 
-## Template
+### Template
 1. Copy the `Template` folder and rename it and the `.csproj` file
 2. Rename the `.cs` files and update the `.csproj` file
 3. Update the information in `Properties\AssemblyInfo.cs`
