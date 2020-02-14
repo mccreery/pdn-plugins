@@ -1,19 +1,19 @@
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Reflection;
 using PaintDotNet;
 using PaintDotNet.AppModel;
 using PaintDotNet.Effects;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using PaintDotNet.Rendering;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Reflection;
 
 namespace AssortedPlugins.Blend
 {
-    [PluginSupportInfo(typeof(AssemblyPluginInfo))]
+    [PluginSupportInfo(typeof(DefaultPluginInfo))]
     [EffectCategory(EffectCategory.Adjustment)]
-    public partial class BlendEffect : PropertyBasedEffect
+    public class Blend : PropertyBasedEffect
     {
         private ColorBgra color;
         private CompositionOp blendMode;
@@ -23,9 +23,9 @@ namespace AssortedPlugins.Blend
         private bool interpolateColor;
         private bool underlay;
 
-        public BlendEffect() : base(
-                typeof(BlendEffect).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
-                new Bitmap(typeof(BlendEffect), "icon.png"),
+        public Blend() : base(
+                typeof(Blend).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
+                new Bitmap(typeof(Blend), "icon.png"),
                 null,
                 new EffectOptions() { Flags = EffectFlags.Configurable })
         {
@@ -94,7 +94,7 @@ namespace AssortedPlugins.Blend
             base.OnCustomizeConfigUIWindowProperties(props);
 
             props[ControlInfoPropertyNames.WindowTitle].Value =
-                typeof(BlendEffect).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
+                typeof(Blend).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
         }
 
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)
@@ -109,6 +109,55 @@ namespace AssortedPlugins.Blend
             blendAlpha= newToken.GetProperty<BooleanProperty>(nameof(blendAlpha)).Value;
             interpolateColor = newToken.GetProperty<BooleanProperty>(nameof(interpolateColor)).Value;
             underlay = newToken.GetProperty<BooleanProperty>(nameof(underlay)).Value;
+        }
+
+        protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
+        {
+            int endIndex = startIndex + length;
+
+            for (int i = startIndex; i < endIndex; i++)
+            {
+                Render(DstArgs.Surface, SrcArgs.Surface, renderRects[i]);
+            }
+        }
+
+        void Render(Surface dst, Surface src, Rectangle rect)
+        {
+            BlendFunc blendFunc = this.blendMode.GetBlendFunc();
+            ColorBgra colorOpaque = color.NewAlpha(255);
+
+            for (int y = rect.Top; y < rect.Bottom; y++)
+            {
+                for (int x = rect.Left; x < rect.Right; x++)
+                {
+                    ColorBgra srcColor = src[x, y];
+                    ColorBgra dstColor = srcColor;
+
+                    if (blendColor)
+                    {
+                        byte tempAlpha = dstColor.A;
+                        dstColor.A = 255;
+                        dstColor = blendMode.Apply(dstColor, colorOpaque);
+                        dstColor.A = tempAlpha;
+                    }
+                    if (blendAlpha)
+                    {
+                        dstColor.A = blendFunc(dstColor.A, color.A);
+                    }
+                    if (interpolateColor)
+                    {
+                        byte a = dstColor.A;
+                        dstColor = ColorBgra.Lerp(srcColor, dstColor, ByteUtil.ToScalingFloat(color.A));
+                        dstColor.A = a;
+                    }
+                    if (underlay)
+                    {
+                        dstColor = UserBlendOps.NormalBlendOp.ApplyStatic(color, dstColor);
+                    }
+
+                    dst[x, y] = dstColor;
+                }
+            }
         }
     }
 }

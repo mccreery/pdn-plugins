@@ -10,16 +10,16 @@ using PaintDotNet.PropertySystem;
 
 namespace AssortedPlugins.GrowAndShrink
 {
-    [PluginSupportInfo(typeof(AssemblyPluginInfo))]
-    public partial class GrowAndShrinkEffect : PropertyBasedEffect
+    [PluginSupportInfo(typeof(DefaultPluginInfo))]
+    public class GrowAndShrink : PropertyBasedEffect
     {
         private int radius;
         private ColorBgra color;
         private SmoothingMode smoothingMode;
 
-        public GrowAndShrinkEffect() : base(
-                typeof(GrowAndShrinkEffect).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
-                new Bitmap(typeof(GrowAndShrinkEffect), "icon.png"),
+        public GrowAndShrink() : base(
+                typeof(GrowAndShrink).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
+                new Bitmap(typeof(GrowAndShrink), "icon.png"),
                 SubmenuNames.Distort,
                 new EffectOptions() { Flags = EffectFlags.Configurable })
         {
@@ -64,7 +64,7 @@ namespace AssortedPlugins.GrowAndShrink
             base.OnCustomizeConfigUIWindowProperties(props);
 
             props[ControlInfoPropertyNames.WindowTitle].Value =
-                typeof(GrowAndShrinkEffect).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
+                typeof(GrowAndShrink).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
         }
 
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)
@@ -76,6 +76,51 @@ namespace AssortedPlugins.GrowAndShrink
                 newToken.GetProperty<Int32Property>(nameof(color)).Value);
             smoothingMode = newToken.GetProperty<BooleanProperty>(nameof(smoothingMode)).Value
                 ? SmoothingMode.AntiAlias : SmoothingMode.Default;
+        }
+
+        protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
+        {
+            Kernel kernel = GetKernel();
+            int endIndex = startIndex + length;
+
+            for(int i = startIndex; i < endIndex; i++)
+            {
+                Render(DstArgs.Surface, SrcArgs.Surface, renderRects[i], kernel);
+            }
+        }
+
+        private void Render(Surface dst, Surface src, Rectangle rect, Kernel kernel)
+        {
+            if(radius == 0)
+            {
+                dst.CopySurface(src, rect.Location, rect);
+                return;
+            }
+
+            for(int y = rect.Top; y < rect.Bottom; y++)
+            {
+                if(IsCancelRequested) { return; }
+                for(int x = rect.Left; x < rect.Right; x++)
+                {
+                    ColorBgra blendedColor = ColorBgra.Blend(color, src[x, y], src[x, y].A);
+                    byte alpha = kernel.WeightedExtremeAlpha(src, x, y, radius < 0);
+
+                    dst[x, y] = blendedColor.NewAlpha(alpha);
+                }
+            }
+        }
+
+        private Kernel GetKernel()
+        {
+            int size = Math.Abs(radius)*2 + 1;
+
+            Bitmap bitmap = new Bitmap(size, size);
+            Graphics g = Graphics.FromImage(bitmap);
+
+            g.SmoothingMode = smoothingMode;
+            g.PixelOffsetMode = PixelOffsetMode.Half;
+            g.FillEllipse(Brushes.Black, 0, 0, bitmap.Width, bitmap.Height);
+            return new Kernel(bitmap);
         }
     }
 }
