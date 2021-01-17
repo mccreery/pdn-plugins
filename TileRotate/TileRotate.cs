@@ -30,19 +30,19 @@ namespace AssortedPlugins.TileRotate
             configUI.SetPropertyControlType("mode", PropertyControlType.RadioButton);
 
             PropertyControlInfo modeControl = configUI.FindControlForPropertyName("mode");
-            modeControl.SetValueDisplayName(nameof(OffsetMode.Relative), "Relative");
-            modeControl.SetValueDisplayName(nameof(OffsetMode.Absolute), "Absolute");
+            modeControl.SetValueDisplayName(OffsetMode.Relative, "Relative");
+            modeControl.SetValueDisplayName(OffsetMode.Absolute, "Absolute");
 
             configUI.SetPropertyControlType("pan", PropertyControlType.PanAndSlider);
             configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.DisplayName, "Relative Offset");
 
             configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.SliderSmallChangeX, 0.05);
             configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.SliderLargeChangeX, 0.25);
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.UpDownIncrementX, 0.05);
+            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.UpDownIncrementX, 0.01);
 
             configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.SliderSmallChangeY, 0.05);
             configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.SliderLargeChangeY, 0.25);
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.UpDownIncrementY, 0.05);
+            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.UpDownIncrementY, 0.01);
 
             ImageResource underlay = ImageResource.FromImage(EnvironmentParameters.SourceSurface.CreateAliasedBitmap(EnvironmentParameters.SelectionBounds));
             configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.StaticImageUnderlay, GetTiledUnderlay());
@@ -76,9 +76,11 @@ namespace AssortedPlugins.TileRotate
             List<Property> props = new List<Property>();
 
             props.Add(StaticListChoiceProperty.CreateForEnum<OffsetMode>("mode", OffsetMode.Relative, false));
-            props.Add(new DoubleVectorProperty("pan", Pair.Create(0.0, 0.0), Pair.Create(-1.0, -1.0), Pair.Create(1.0, 1.0)));
-            props.Add(new Int32Property("offsetX", 0, -256, 256));
-            props.Add(new Int32Property("offsetY", 0, -256, 256));
+            props.Add(new DoubleVectorProperty("pan", Pair.Create(0.5, 0.5), Pair.Create(-1.0, -1.0), Pair.Create(1.0, 1.0)));
+
+            Rectangle bounds = EnvironmentParameters.SelectionBounds;
+            props.Add(new Int32Property("offsetX", (int)Math.Round(bounds.Width / 2.0), -bounds.Width, bounds.Width));
+            props.Add(new Int32Property("offsetY", (int)Math.Round(bounds.Height / 2.0), -bounds.Height, bounds.Height));
 
             List<PropertyCollectionRule> rules = new List<PropertyCollectionRule>();
 
