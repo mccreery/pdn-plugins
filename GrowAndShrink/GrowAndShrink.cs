@@ -13,8 +13,9 @@ namespace AssortedPlugins.GrowAndShrink
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
     public class GrowAndShrink : PropertyBasedEffect
     {
+        private Method method;
         private int radius;
-        private ColorBgra color;
+        private ColorBgra outlineColor;
         private SmoothingMode smoothingMode;
 
         public GrowAndShrink() : base(
@@ -29,13 +30,20 @@ namespace AssortedPlugins.GrowAndShrink
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
+            configUI.SetPropertyControlType(nameof(method), PropertyControlType.DropDown);
+            configUI.SetPropertyControlValue(nameof(method), ControlInfoPropertyNames.DisplayName, "Method");
+
+            PropertyControlInfo methodControl = configUI.FindControlForPropertyName(nameof(method));
+            methodControl.SetValueDisplayName(Method.EdgeDetection, "Edge Detection (faster)");
+            methodControl.SetValueDisplayName(Method.Neighborhood, "Neighborhood (slower)");
+
             configUI.SetPropertyControlType(nameof(radius), PropertyControlType.Slider);
             configUI.SetPropertyControlValue(nameof(radius), ControlInfoPropertyNames.DisplayName, "Radius");
 
-            configUI.SetPropertyControlType(nameof(color),
+            configUI.SetPropertyControlType(nameof(outlineColor),
                 PropertyControlType.ColorWheel);
-            configUI.SetPropertyControlValue(nameof(color),
-                ControlInfoPropertyNames.DisplayName, "Color");
+            configUI.SetPropertyControlValue(nameof(outlineColor),
+                ControlInfoPropertyNames.DisplayName, "Outline Color");
 
             configUI.SetPropertyControlType(nameof(smoothingMode), PropertyControlType.CheckBox);
             configUI.SetPropertyControlValue(nameof(smoothingMode), ControlInfoPropertyNames.DisplayName, "");
@@ -49,10 +57,9 @@ namespace AssortedPlugins.GrowAndShrink
             List<Property> props = new List<Property>();
             ColorBgra primaryColor = EnvironmentParameters.PrimaryColor;
 
+            props.Add(StaticListChoiceProperty.CreateForEnum<Method>(nameof(method), Method.EdgeDetection, false));
             props.Add(new Int32Property(nameof(radius), 0, -50, 50));
-            props.Add(new Int32Property(nameof(color),
-                ColorBgra.ToOpaqueInt32(primaryColor.NewAlpha(255)),
-                0x000000, 0xffffff));
+            props.Add(new Int32Property(nameof(outlineColor), (int)(uint)EnvironmentParameters.PrimaryColor));
 
             props.Add(new BooleanProperty(nameof(smoothingMode), false));
 
@@ -71,9 +78,9 @@ namespace AssortedPlugins.GrowAndShrink
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
 
+            method = (Method)newToken.GetProperty<StaticListChoiceProperty>(nameof(method)).Value;
             radius = newToken.GetProperty<Int32Property>(nameof(radius)).Value;
-            color = ColorBgra.FromOpaqueInt32(
-                newToken.GetProperty<Int32Property>(nameof(color)).Value);
+            outlineColor = (ColorBgra)(uint)newToken.GetProperty<Int32Property>(nameof(outlineColor)).Value;
             smoothingMode = newToken.GetProperty<BooleanProperty>(nameof(smoothingMode)).Value
                 ? SmoothingMode.AntiAlias : SmoothingMode.Default;
         }
@@ -102,10 +109,11 @@ namespace AssortedPlugins.GrowAndShrink
                 if(IsCancelRequested) { return; }
                 for(int x = rect.Left; x < rect.Right; x++)
                 {
-                    ColorBgra blendedColor = ColorBgra.Blend(color, src[x, y], src[x, y].A);
-                    byte alpha = kernel.WeightedExtremeAlpha(src, x, y, radius < 0);
+                    byte maxAlpha = kernel.WeightedExtremeAlpha(src, x, y, radius < 0);
+                    byte multipliedAlpha = (byte)Math.Round(outlineColor.A * (maxAlpha / 255.0));
 
-                    dst[x, y] = blendedColor.NewAlpha(alpha);
+                    ColorBgra color = outlineColor.NewAlpha(multipliedAlpha);
+                    dst[x, y] = UserBlendOps.NormalBlendOp.ApplyStatic(color, src[x, y]);
                 }
             }
         }
@@ -122,5 +130,11 @@ namespace AssortedPlugins.GrowAndShrink
             g.FillEllipse(Brushes.Black, 0, 0, bitmap.Width, bitmap.Height);
             return new Kernel(bitmap);
         }
+    }
+
+    public enum Method
+    {
+        Neighborhood,
+        EdgeDetection
     }
 }
