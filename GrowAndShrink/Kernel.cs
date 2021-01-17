@@ -25,7 +25,7 @@ namespace AssortedPlugins.GrowAndShrink
             }
         }
 
-        public byte WeightedExtremeAlpha(Surface surface, int x, int y, bool min)
+        public byte WeightedMaxAlpha(Surface surface, int x, int y)
         {
             x -= anchor.X;
             y -= anchor.Y;
@@ -37,11 +37,6 @@ namespace AssortedPlugins.GrowAndShrink
                 {
                     byte alpha = surface.GetPointZeroPad(x + xOffset, y + yOffset).A;
 
-                    // Treat transparent pixels as opaque
-                    if(min)
-                    {
-                        alpha = (byte)(255 - alpha);
-                    }
                     alpha = (byte)Math.Round(alpha * kernelAlpha[yOffset, xOffset]);
                     maxAlpha = Math.Max(maxAlpha, alpha);
 
@@ -54,12 +49,6 @@ namespace AssortedPlugins.GrowAndShrink
                 }
             }
 Short:
-            // Treat transparent pixels as transparent again
-            // Equivalently can be done inside the loop and using Math.Min
-            if(min)
-            {
-                maxAlpha = (byte)(255 - maxAlpha);
-            }
             return maxAlpha;
         }
     }

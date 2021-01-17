@@ -14,7 +14,7 @@ namespace AssortedPlugins.GrowAndShrink
     public class GrowAndShrink : PropertyBasedEffect
     {
         private Method method;
-        private int radius;
+        private int outlineWidth;
         private ColorBgra outlineColor;
         private SmoothingMode smoothingMode;
 
@@ -37,8 +37,8 @@ namespace AssortedPlugins.GrowAndShrink
             methodControl.SetValueDisplayName(Method.EdgeDetection, "Edge Detection (faster)");
             methodControl.SetValueDisplayName(Method.Neighborhood, "Neighborhood (slower)");
 
-            configUI.SetPropertyControlType(nameof(radius), PropertyControlType.Slider);
-            configUI.SetPropertyControlValue(nameof(radius), ControlInfoPropertyNames.DisplayName, "Radius");
+            configUI.SetPropertyControlType(nameof(outlineWidth), PropertyControlType.Slider);
+            configUI.SetPropertyControlValue(nameof(outlineWidth), ControlInfoPropertyNames.DisplayName, "Outline Width");
 
             configUI.SetPropertyControlType(nameof(outlineColor),
                 PropertyControlType.ColorWheel);
@@ -58,7 +58,7 @@ namespace AssortedPlugins.GrowAndShrink
             ColorBgra primaryColor = EnvironmentParameters.PrimaryColor;
 
             props.Add(StaticListChoiceProperty.CreateForEnum<Method>(nameof(method), Method.EdgeDetection, false));
-            props.Add(new Int32Property(nameof(radius), 0, -50, 50));
+            props.Add(new Int32Property(nameof(outlineWidth), 10, 0, 50));
             props.Add(new Int32Property(nameof(outlineColor), (int)(uint)EnvironmentParameters.PrimaryColor));
 
             props.Add(new BooleanProperty(nameof(smoothingMode), false));
@@ -79,7 +79,7 @@ namespace AssortedPlugins.GrowAndShrink
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
 
             method = (Method)newToken.GetProperty<StaticListChoiceProperty>(nameof(method)).Value;
-            radius = newToken.GetProperty<Int32Property>(nameof(radius)).Value;
+            outlineWidth = newToken.GetProperty<Int32Property>(nameof(outlineWidth)).Value;
             outlineColor = (ColorBgra)(uint)newToken.GetProperty<Int32Property>(nameof(outlineColor)).Value;
             smoothingMode = newToken.GetProperty<BooleanProperty>(nameof(smoothingMode)).Value
                 ? SmoothingMode.AntiAlias : SmoothingMode.Default;
@@ -98,7 +98,7 @@ namespace AssortedPlugins.GrowAndShrink
 
         private void Render(Surface dst, Surface src, Rectangle rect, Kernel kernel)
         {
-            if(radius == 0)
+            if(outlineWidth == 0)
             {
                 dst.CopySurface(src, rect.Location, rect);
                 return;
@@ -109,7 +109,7 @@ namespace AssortedPlugins.GrowAndShrink
                 if(IsCancelRequested) { return; }
                 for(int x = rect.Left; x < rect.Right; x++)
                 {
-                    byte maxAlpha = kernel.WeightedExtremeAlpha(src, x, y, radius < 0);
+                    byte maxAlpha = kernel.WeightedMaxAlpha(src, x, y);
                     byte multipliedAlpha = (byte)Math.Round(outlineColor.A * (maxAlpha / 255.0));
 
                     ColorBgra color = outlineColor.NewAlpha(multipliedAlpha);
@@ -120,7 +120,7 @@ namespace AssortedPlugins.GrowAndShrink
 
         private Kernel GetKernel()
         {
-            int size = Math.Abs(radius)*2 + 1;
+            int size = Math.Abs(outlineWidth)*2 + 1;
 
             Bitmap bitmap = new Bitmap(size, size);
             Graphics g = Graphics.FromImage(bitmap);
