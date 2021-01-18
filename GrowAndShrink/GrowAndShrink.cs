@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Reflection;
 using PaintDotNet;
 using PaintDotNet.Effects;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
+using PaintDotNet.SystemLayer;
 
 namespace AssortedPlugins.GrowAndShrink
 {
@@ -87,13 +89,15 @@ namespace AssortedPlugins.GrowAndShrink
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
         {
+            RenderingKernels.GaussianBlur(GetBitmapData(DstArgs.Surface), GetBitmapData(SrcArgs.Surface), renderRects, startIndex, length, outlineWidth);
+            /*
             Kernel kernel = GetKernel();
             int endIndex = startIndex + length;
 
             for(int i = startIndex; i < endIndex; i++)
             {
                 Render(DstArgs.Surface, SrcArgs.Surface, renderRects[i], kernel);
-            }
+            }*/
         }
 
         private void Render(Surface dst, Surface src, Rectangle rect, Kernel kernel)
@@ -129,6 +133,16 @@ namespace AssortedPlugins.GrowAndShrink
             g.PixelOffsetMode = PixelOffsetMode.Half;
             g.FillEllipse(Brushes.Black, 0, 0, bitmap.Width, bitmap.Height);
             return new Kernel(bitmap);
+        }
+
+        private static BitmapData GetBitmapData(Surface surface)
+        {
+            BitmapData bitmapData = new BitmapData();
+            bitmapData.Width = surface.Width;
+            bitmapData.Height = surface.Height;
+            bitmapData.Stride = surface.Stride;
+            bitmapData.Scan0 = surface.Scan0.Pointer;
+            return bitmapData;
         }
     }
 
