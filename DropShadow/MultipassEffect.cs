@@ -23,22 +23,24 @@ namespace AssortedPlugins.DropShadow
     public abstract class MultipassEffect : PropertyBasedEffect
     {
         private const int NUM_THREADS = 4;
-        private readonly RenderPhase[] phases;
 
         // No rendering schedule, manual threading
         // This is to ensure that the whole image is processed at each phase
-        public MultipassEffect(string name, [Optional] Image image, [Optional] string subMenuName, EffectOptions options, params RenderPhase[] phases) : base(
+        public MultipassEffect(string name, [Optional] Image image, [Optional] string subMenuName, EffectOptions options) : base(
             name,
             image,
             subMenuName,
             new EffectOptions() { Flags = options.Flags, RenderingSchedule = EffectRenderingSchedule.None })
         {
-            this.phases = phases;
         }
+
+        protected abstract RenderPhase[] Phases { get; }
 
         // This implementation should receive the entire image in accordance with the schedule
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
         {
+            // Cache phases
+            RenderPhase[] phases = Phases;
             RenderArgs[] phaseResults = new RenderArgs[phases.Length + 1];
 
             // First and last phases use existing src/dst surfaces
