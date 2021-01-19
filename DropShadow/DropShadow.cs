@@ -15,10 +15,13 @@ namespace AssortedPlugins.DropShadow
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
     public class DropShadow : PropertyBasedEffect
     {
-        private Method method;
-        private int outlineWidth;
-        private ColorBgra outlineColor;
-        private SmoothingMode smoothingMode;
+        private Color color;
+        private int offsetX;
+        private int offsetY;
+        private int spreadRadius;
+        private int blurRadius;
+        private bool inset;
+        private bool shadowOnly;
 
         public DropShadow() : base(
                 typeof(DropShadow).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
@@ -32,24 +35,26 @@ namespace AssortedPlugins.DropShadow
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
-            configUI.SetPropertyControlType(nameof(method), PropertyControlType.DropDown);
-            configUI.SetPropertyControlValue(nameof(method), ControlInfoPropertyNames.DisplayName, "Method");
+            configUI.SetPropertyControlType(PropertyNames.Color, PropertyControlType.ColorWheel);
+            configUI.SetPropertyControlValue(PropertyNames.Color, ControlInfoPropertyNames.DisplayName, "Color");
 
-            PropertyControlInfo methodControl = configUI.FindControlForPropertyName(nameof(method));
-            methodControl.SetValueDisplayName(Method.EdgeDetection, "Edge Detection (faster)");
-            methodControl.SetValueDisplayName(Method.Neighborhood, "Neighborhood (slower)");
+            configUI.SetPropertyControlType(PropertyNames.OffsetX, PropertyControlType.Slider);
+            configUI.SetPropertyControlValue(PropertyNames.OffsetX, ControlInfoPropertyNames.DisplayName, "Horizontal Offset");
+            configUI.SetPropertyControlType(PropertyNames.OffsetY, PropertyControlType.Slider);
+            configUI.SetPropertyControlValue(PropertyNames.OffsetY, ControlInfoPropertyNames.DisplayName, "Vertical Offset");
 
-            configUI.SetPropertyControlType(nameof(outlineWidth), PropertyControlType.Slider);
-            configUI.SetPropertyControlValue(nameof(outlineWidth), ControlInfoPropertyNames.DisplayName, "Outline Width");
+            configUI.SetPropertyControlType(PropertyNames.SpreadRadius, PropertyControlType.Slider);
+            configUI.SetPropertyControlValue(PropertyNames.SpreadRadius, ControlInfoPropertyNames.DisplayName, "Spread Radius");
+            configUI.SetPropertyControlType(PropertyNames.BlurRadius, PropertyControlType.Slider);
+            configUI.SetPropertyControlValue(PropertyNames.BlurRadius, ControlInfoPropertyNames.DisplayName, "Blur Radius");
 
-            configUI.SetPropertyControlType(nameof(outlineColor),
-                PropertyControlType.ColorWheel);
-            configUI.SetPropertyControlValue(nameof(outlineColor),
-                ControlInfoPropertyNames.DisplayName, "Outline Color");
+            configUI.SetPropertyControlType(PropertyNames.Inset, PropertyControlType.CheckBox);
+            configUI.SetPropertyControlValue(PropertyNames.Inset, ControlInfoPropertyNames.DisplayName, "");
+            configUI.SetPropertyControlValue(PropertyNames.Inset, ControlInfoPropertyNames.Description, "Inset");
 
-            configUI.SetPropertyControlType(nameof(smoothingMode), PropertyControlType.CheckBox);
-            configUI.SetPropertyControlValue(nameof(smoothingMode), ControlInfoPropertyNames.DisplayName, "");
-            configUI.SetPropertyControlValue(nameof(smoothingMode), ControlInfoPropertyNames.Description, "Antialiasing");
+            configUI.SetPropertyControlType(PropertyNames.ShadowOnly, PropertyControlType.CheckBox);
+            configUI.SetPropertyControlValue(PropertyNames.ShadowOnly, ControlInfoPropertyNames.DisplayName, "");
+            configUI.SetPropertyControlValue(PropertyNames.ShadowOnly, ControlInfoPropertyNames.Description, "Shadow Only");
 
             return configUI;
         }
@@ -57,13 +62,14 @@ namespace AssortedPlugins.DropShadow
         protected override PropertyCollection OnCreatePropertyCollection()
         {
             List<Property> props = new List<Property>();
-            ColorBgra primaryColor = EnvironmentParameters.PrimaryColor;
 
-            props.Add(StaticListChoiceProperty.CreateForEnum<Method>(nameof(method), Method.EdgeDetection, false));
-            props.Add(new Int32Property(nameof(outlineWidth), 10, 0, 50));
-            props.Add(new Int32Property(nameof(outlineColor), (int)(uint)EnvironmentParameters.PrimaryColor));
-
-            props.Add(new BooleanProperty(nameof(smoothingMode), false));
+            props.Add(new Int32Property(PropertyNames.Color, (int)(uint)EnvironmentParameters.PrimaryColor));
+            props.Add(new Int32Property(PropertyNames.OffsetX, 0, -100, 100));
+            props.Add(new Int32Property(PropertyNames.OffsetY, 0, -100, 100));
+            props.Add(new Int32Property(PropertyNames.SpreadRadius, 0, 0, 100));
+            props.Add(new Int32Property(PropertyNames.BlurRadius, 0, 0, 100));
+            props.Add(new BooleanProperty(PropertyNames.Inset, false));
+            props.Add(new BooleanProperty(PropertyNames.ShadowOnly, false));
 
             return new PropertyCollection(props);
         }
@@ -80,33 +86,35 @@ namespace AssortedPlugins.DropShadow
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
 
-            method = (Method)newToken.GetProperty<StaticListChoiceProperty>(nameof(method)).Value;
-            outlineWidth = newToken.GetProperty<Int32Property>(nameof(outlineWidth)).Value;
-            outlineColor = (ColorBgra)(uint)newToken.GetProperty<Int32Property>(nameof(outlineColor)).Value;
-            smoothingMode = newToken.GetProperty<BooleanProperty>(nameof(smoothingMode)).Value
-                ? SmoothingMode.AntiAlias : SmoothingMode.Default;
+            color = (ColorBgra)(uint)newToken.GetProperty<Int32Property>(PropertyNames.Color).Value;
+            offsetX = newToken.GetProperty<Int32Property>(PropertyNames.OffsetX).Value;
+            offsetY = newToken.GetProperty<Int32Property>(PropertyNames.OffsetY).Value;
+            spreadRadius = newToken.GetProperty<Int32Property>(PropertyNames.SpreadRadius).Value;
+            blurRadius = newToken.GetProperty<Int32Property>(PropertyNames.BlurRadius).Value;
+            inset = newToken.GetProperty<BooleanProperty>(PropertyNames.Inset).Value;
+            shadowOnly = newToken.GetProperty<BooleanProperty>(PropertyNames.ShadowOnly).Value;
         }
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
         {
-            RenderingKernels.GaussianBlur(GetBitmapData(DstArgs.Surface), GetBitmapData(SrcArgs.Surface), renderRects, startIndex, length, outlineWidth);
-            /*
+            //RenderingKernels.GaussianBlur(GetBitmapData(DstArgs.Surface), GetBitmapData(SrcArgs.Surface), renderRects, startIndex, length, outlineWidth);
+
             Kernel kernel = GetKernel();
             int endIndex = startIndex + length;
 
             for(int i = startIndex; i < endIndex; i++)
             {
                 Render(DstArgs.Surface, SrcArgs.Surface, renderRects[i], kernel);
-            }*/
+            }
         }
 
         private void Render(Surface dst, Surface src, Rectangle rect, Kernel kernel)
         {
-            if(outlineWidth == 0)
+            /*if(outlineWidth == 0)
             {
                 dst.CopySurface(src, rect.Location, rect);
                 return;
-            }
+            }*/
 
             for(int y = rect.Top; y < rect.Bottom; y++)
             {
@@ -114,9 +122,9 @@ namespace AssortedPlugins.DropShadow
                 for(int x = rect.Left; x < rect.Right; x++)
                 {
                     byte maxAlpha = kernel.WeightedMaxAlpha(src, x, y);
-                    byte multipliedAlpha = (byte)Math.Round(outlineColor.A * (maxAlpha / 255.0));
+                    byte multipliedAlpha = (byte)Math.Round(255/*outlineColor.A*/ * (maxAlpha / 255.0));
 
-                    ColorBgra color = outlineColor.NewAlpha(multipliedAlpha);
+                    ColorBgra color = ColorBgra.Black/*outlineColor*/.NewAlpha(multipliedAlpha);
                     dst[x, y] = UserBlendOps.NormalBlendOp.ApplyStatic(color, src[x, y]);
                 }
             }
@@ -124,12 +132,12 @@ namespace AssortedPlugins.DropShadow
 
         private Kernel GetKernel()
         {
-            int size = Math.Abs(outlineWidth)*2 + 1;
+            int size = Math.Abs(10/*outlineWidth*/)*2 + 1;
 
             Bitmap bitmap = new Bitmap(size, size);
             Graphics g = Graphics.FromImage(bitmap);
 
-            g.SmoothingMode = smoothingMode;
+            g.SmoothingMode = SmoothingMode.AntiAlias/*smoothingMode*/;
             g.PixelOffsetMode = PixelOffsetMode.Half;
             g.FillEllipse(Brushes.Black, 0, 0, bitmap.Width, bitmap.Height);
             return new Kernel(bitmap);
@@ -144,11 +152,16 @@ namespace AssortedPlugins.DropShadow
             bitmapData.Scan0 = surface.Scan0.Pointer;
             return bitmapData;
         }
-    }
 
-    public enum Method
-    {
-        Neighborhood,
-        EdgeDetection
+        public enum PropertyNames
+        {
+            Color,
+            OffsetX,
+            OffsetY,
+            SpreadRadius,
+            BlurRadius,
+            Inset,
+            ShadowOnly
+        }
     }
 }
