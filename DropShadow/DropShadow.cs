@@ -15,7 +15,7 @@ namespace AssortedPlugins.DropShadow
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
     public class DropShadow : PropertyBasedEffect
     {
-        private Color color;
+        private ColorBgra color;
         private int offsetX;
         private int offsetY;
         private int spreadRadius;
@@ -110,23 +110,79 @@ namespace AssortedPlugins.DropShadow
 
         private void Render(Surface dst, Surface src, Rectangle rect, Kernel kernel)
         {
-            /*if(outlineWidth == 0)
-            {
-                dst.CopySurface(src, rect.Location, rect);
-                return;
-            }*/
+            CopyShiftedRect(dst, src, rect);
+            Recolor(dst, color, rect);
 
-            for(int y = rect.Top; y < rect.Bottom; y++)
+            //if(outlineWidth == 0)
+            //{
+            //    dst.CopySurface(src, rect.Location, rect);
+            //    return;
+            //}
+
+            //for(int y = rect.Top; y < rect.Bottom; y++)
+            //{
+            //    if(IsCancelRequested) { return; }
+            //    for(int x = rect.Left; x < rect.Right; x++)
+            //    {
+            //        byte maxAlpha = kernel.WeightedMaxAlpha(src, x, y);
+            //        byte multipliedAlpha = (byte)Math.Round(255/*outlineColor.A*/ * (maxAlpha / 255.0));
+
+            //        ColorBgra color = ColorBgra.Black/*outlineColor*/.NewAlpha(multipliedAlpha);
+            //        dst[x, y] = UserBlendOps.NormalBlendOp.ApplyStatic(color, src[x, y]);
+            //    }
+            //}
+        }
+
+        /// <summary>
+        ///   Fills a rectangle with a solid color without changing the alpha, creating a silhouette effect.
+        /// </summary>
+        private void Recolor(Surface dst, ColorBgra color, Rectangle rect)
+        {
+            for (int y = rect.Top; y < rect.Bottom; y++)
             {
-                if(IsCancelRequested) { return; }
-                for(int x = rect.Left; x < rect.Right; x++)
+                for (int x = rect.Left; x < rect.Right; x++)
                 {
-                    byte maxAlpha = kernel.WeightedMaxAlpha(src, x, y);
-                    byte multipliedAlpha = (byte)Math.Round(255/*outlineColor.A*/ * (maxAlpha / 255.0));
-
-                    ColorBgra color = ColorBgra.Black/*outlineColor*/.NewAlpha(multipliedAlpha);
-                    dst[x, y] = UserBlendOps.NormalBlendOp.ApplyStatic(color, src[x, y]);
+                    dst[x, y] = color.NewAlpha(dst[x, y].A);
                 }
+            }
+        }
+
+        /// <summary>
+        ///   Copies the shifted image within the destination rectangle only.
+        /// </summary>
+        private void CopyShiftedRect(Surface dst, Surface src, Rectangle dstRect)
+        {
+            dst.Clear(dstRect, ColorBgra.Transparent);
+
+            Rectangle srcRect = dstRect;
+            srcRect.X -= offsetX;
+            srcRect.Y -= offsetY;
+
+            if (srcRect.X < 0)
+            {
+                dstRect.X -= srcRect.X;
+                srcRect.Width += srcRect.X;
+                srcRect.X = 0;
+            }
+            else if (srcRect.Right > dst.Width)
+            {
+                srcRect.Width -= srcRect.Right - dst.Width;
+            }
+
+            if (srcRect.Y < 0)
+            {
+                dstRect.Y -= srcRect.Y;
+                srcRect.Height += srcRect.Y;
+                srcRect.Y = 0;
+            }
+            else if (srcRect.Bottom > dst.Height)
+            {
+                srcRect.Height -= srcRect.Bottom - dst.Height;
+            }
+
+            if (srcRect.Width > 0 && srcRect.Height > 0)
+            {
+                dst.CopySurface(src, dstRect.Location, srcRect);
             }
         }
 
