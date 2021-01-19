@@ -43,12 +43,10 @@ namespace AssortedPlugins.DropShadow
                     // Short circuit case - we can't get any more opaque
                     if(maxAlpha == 255)
                     {
-                        // hehe
-                        goto Short;
+                        return maxAlpha;
                     }
                 }
             }
-Short:
             return maxAlpha;
         }
     }

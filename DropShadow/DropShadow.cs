@@ -82,6 +82,8 @@ namespace AssortedPlugins.DropShadow
                 typeof(DropShadow).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
         }
 
+        private Surface shifted;
+
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
@@ -93,12 +95,13 @@ namespace AssortedPlugins.DropShadow
             blurRadius = newToken.GetProperty<Int32Property>(PropertyNames.BlurRadius).Value;
             inset = newToken.GetProperty<BooleanProperty>(PropertyNames.Inset).Value;
             shadowOnly = newToken.GetProperty<BooleanProperty>(PropertyNames.ShadowOnly).Value;
+
+            // Prepare offscreen surfaces for each step of the calculation
+            shifted = new Surface(srcArgs.Size);
         }
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
         {
-            //RenderingKernels.GaussianBlur(GetBitmapData(DstArgs.Surface), GetBitmapData(SrcArgs.Surface), renderRects, startIndex, length, outlineWidth);
-
             Kernel kernel = GetKernel();
             int endIndex = startIndex + length;
 
@@ -110,39 +113,70 @@ namespace AssortedPlugins.DropShadow
 
         private void Render(Surface dst, Surface src, Rectangle rect, Kernel kernel)
         {
-            CopyShiftedRect(dst, src, rect);
-            Recolor(dst, color, rect);
+            CopyShiftedRect(shifted, src, rect);
 
-            //if(outlineWidth == 0)
-            //{
-            //    dst.CopySurface(src, rect.Location, rect);
-            //    return;
-            //}
+            if (spreadRadius == 0)
+            {
+                Recolor(dst, shifted, rect);
+            }
+            else
+            {
+                Spread(dst, shifted, rect, kernel);
+            }
 
-            //for(int y = rect.Top; y < rect.Bottom; y++)
-            //{
-            //    if(IsCancelRequested) { return; }
-            //    for(int x = rect.Left; x < rect.Right; x++)
-            //    {
-            //        byte maxAlpha = kernel.WeightedMaxAlpha(src, x, y);
-            //        byte multipliedAlpha = (byte)Math.Round(255/*outlineColor.A*/ * (maxAlpha / 255.0));
-
-            //        ColorBgra color = ColorBgra.Black/*outlineColor*/.NewAlpha(multipliedAlpha);
-            //        dst[x, y] = UserBlendOps.NormalBlendOp.ApplyStatic(color, src[x, y]);
-            //    }
-            //}
+            if (!shadowOnly)
+            {
+                BlendOver(dst, src, rect);
+            }
         }
 
         /// <summary>
         ///   Fills a rectangle with a solid color without changing the alpha, creating a silhouette effect.
         /// </summary>
-        private void Recolor(Surface dst, ColorBgra color, Rectangle rect)
+        private void Recolor(Surface dst, Surface src, Rectangle rect)
         {
             for (int y = rect.Top; y < rect.Bottom; y++)
             {
+                if (IsCancelRequested) return;
+
                 for (int x = rect.Left; x < rect.Right; x++)
                 {
-                    dst[x, y] = color.NewAlpha(dst[x, y].A);
+                    dst[x, y] = MultiplyAlpha(color, src[x, y].A);
+                }
+            }
+        }
+
+        /// <summary>
+        ///   Fills a rectangle with a solid color, applying spread to the alpha channel.
+        /// </summary>
+        private void Spread(Surface dst, Surface src, Rectangle rect, Kernel kernel)
+        {
+            for (int y = rect.Top; y < rect.Bottom; y++)
+            {
+                if (IsCancelRequested) return;
+
+                for (int x = rect.Left; x < rect.Right; x++)
+                {
+                    byte maxAlpha = kernel.WeightedMaxAlpha(src, x, y);
+                    dst[x, y] = MultiplyAlpha(color, maxAlpha);
+                }
+            }
+        }
+
+        private static ColorBgra MultiplyAlpha(ColorBgra color, byte alpha)
+        {
+            return color.NewAlpha((byte)Math.Round(color.A / 255.0 * alpha));
+        }
+
+        private void BlendOver(Surface dst, Surface src, Rectangle rect)
+        {
+            for (int y = rect.Top; y < rect.Bottom; y++)
+            {
+                if (IsCancelRequested) return;
+
+                for (int x = rect.Left; x < rect.Right; x++)
+                {
+                    dst[x, y] = UserBlendOps.NormalBlendOp.ApplyStatic(dst[x, y], src[x, y]);
                 }
             }
         }
@@ -188,12 +222,12 @@ namespace AssortedPlugins.DropShadow
 
         private Kernel GetKernel()
         {
-            int size = Math.Abs(10/*outlineWidth*/)*2 + 1;
+            int size = Math.Abs(spreadRadius)*2 + 1;
 
             Bitmap bitmap = new Bitmap(size, size);
             Graphics g = Graphics.FromImage(bitmap);
 
-            g.SmoothingMode = SmoothingMode.AntiAlias/*smoothingMode*/;
+            g.SmoothingMode = SmoothingMode.None;
             g.PixelOffsetMode = PixelOffsetMode.Half;
             g.FillEllipse(Brushes.Black, 0, 0, bitmap.Width, bitmap.Height);
             return new Kernel(bitmap);
