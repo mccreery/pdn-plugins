@@ -10,19 +10,19 @@ using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using PaintDotNet.SystemLayer;
 
-namespace AssortedPlugins.GrowAndShrink
+namespace AssortedPlugins.DropShadow
 {
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
-    public class GrowAndShrink : PropertyBasedEffect
+    public class DropShadow : PropertyBasedEffect
     {
         private Method method;
         private int outlineWidth;
         private ColorBgra outlineColor;
         private SmoothingMode smoothingMode;
 
-        public GrowAndShrink() : base(
-                typeof(GrowAndShrink).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
-                new Bitmap(typeof(GrowAndShrink), "icon.png"),
+        public DropShadow() : base(
+                typeof(DropShadow).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
+                new Bitmap(typeof(DropShadow), "icon.png"),
                 SubmenuNames.Distort,
                 new EffectOptions() { Flags = EffectFlags.Configurable })
         {
@@ -73,7 +73,7 @@ namespace AssortedPlugins.GrowAndShrink
             base.OnCustomizeConfigUIWindowProperties(props);
 
             props[ControlInfoPropertyNames.WindowTitle].Value =
-                typeof(GrowAndShrink).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
+                typeof(DropShadow).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
         }
 
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)

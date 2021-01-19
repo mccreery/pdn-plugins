@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using PaintDotNet;
 
-namespace AssortedPlugins.GrowAndShrink
+namespace AssortedPlugins.DropShadow
 {
     public class Kernel
     {
