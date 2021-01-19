@@ -188,38 +188,7 @@ namespace AssortedPlugins.DropShadow
         /// </summary>
         private void RenderOffset(RenderArgs dst, RenderArgs src, Rectangle dstRect)
         {
-            dst.Surface.Clear(dstRect, ColorBgra.Transparent);
-
-            Rectangle srcRect = dstRect;
-            srcRect.X -= offsetX;
-            srcRect.Y -= offsetY;
-
-            if (srcRect.X < 0)
-            {
-                dstRect.X -= srcRect.X;
-                srcRect.Width += srcRect.X;
-                srcRect.X = 0;
-            }
-            else if (srcRect.Right > dst.Width)
-            {
-                srcRect.Width -= srcRect.Right - dst.Width;
-            }
-
-            if (srcRect.Y < 0)
-            {
-                dstRect.Y -= srcRect.Y;
-                srcRect.Height += srcRect.Y;
-                srcRect.Y = 0;
-            }
-            else if (srcRect.Bottom > dst.Height)
-            {
-                srcRect.Height -= srcRect.Bottom - dst.Height;
-            }
-
-            if (srcRect.Width > 0 && srcRect.Height > 0)
-            {
-                dst.Surface.CopySurface(src.Surface, dstRect.Location, srcRect);
-            }
+            dst.Surface.CopySurface(src.Surface, dstRect, new Size(offsetX, offsetY));
         }
 
         private Kernel GetKernel()

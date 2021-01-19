@@ -67,6 +67,7 @@
     <Compile Include="MultipassEffect.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DropShadow.cs" />
+    <Compile Include="SurfaceExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="icon.png" />
