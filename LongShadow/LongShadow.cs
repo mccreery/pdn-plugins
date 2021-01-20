@@ -100,8 +100,12 @@ namespace AssortedPlugins.LongShadow
                 rays[i] = new Ray(origin, rayDirection);
             }
 
+            if (IsCancelRequested) return;
+
             PointF?[] traces = RayTrace(rays, SrcArgs.Bounds, point =>
                 SrcArgs.Surface.GetBilinearSampleClamped(point.X, point.Y).A >= 128);
+
+            if (IsCancelRequested) return;
 
             PdnGraphicsPath graphicsPath = new PdnGraphicsPath();
 
@@ -156,6 +160,8 @@ namespace AssortedPlugins.LongShadow
 
                 for (int i = chunkStart; i < chunkEnd; i++)
                 {
+                    if (IsCancelRequested) return;
+
                     Ray ray = rays[i];
 
                     float t = -ray.Flip().TraceEdge(bounds);
