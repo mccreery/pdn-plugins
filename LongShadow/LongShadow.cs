@@ -116,6 +116,7 @@ namespace AssortedPlugins.LongShadow
             }
 
             DstArgs.Surface.Clear(ColorBgra.Transparent);
+            DstArgs.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             DstArgs.Graphics.FillPath(new SolidBrush(color), graphicsPath);
 
             if (!shadowOnly)
