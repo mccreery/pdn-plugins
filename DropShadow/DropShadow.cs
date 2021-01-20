@@ -144,7 +144,7 @@ namespace AssortedPlugins.DropShadow
 
                 for (int x = rect.Left; x < rect.Right; x++)
                 {
-                    byte maxAlpha = kernel.WeightedMaxAlpha(src.Surface, x, y);
+                    byte maxAlpha = kernel.WeightedMaxAlpha(src.Surface, new Point(x, y));
                     dst.Surface[x, y] = MultiplyAlpha(color, maxAlpha);
                 }
             }
