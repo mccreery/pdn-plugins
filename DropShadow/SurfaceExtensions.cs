@@ -20,6 +20,7 @@ namespace AssortedPlugins
             if (srcRect.X < 0)
             {
                 dstRect.X -= srcRect.X;
+                dstRect.Width += srcRect.X;
                 srcRect.Width += srcRect.X;
                 srcRect.X = 0;
             }
@@ -31,6 +32,7 @@ namespace AssortedPlugins
             if (srcRect.Y < 0)
             {
                 dstRect.Y -= srcRect.Y;
+                dstRect.Height += srcRect.Y;
                 srcRect.Height += srcRect.Y;
                 srcRect.Y = 0;
             }
