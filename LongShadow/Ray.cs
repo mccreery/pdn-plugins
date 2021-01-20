@@ -14,68 +14,83 @@ namespace AssortedPlugins.LongShadow
             Origin = origin;
             Direction = direction;
 
+            if (direction == SizeF.Empty)
+            {
+                throw new ArgumentException("Direction cannot be zero");
+            }
+
             // Normalize direction
             float length = (float)Math.Sqrt(direction.Width * direction.Width + direction.Height * direction.Height);
             direction.Width /= length;
             direction.Height /= length;
         }
 
+        public Ray Flip()
+        {
+            return new Ray(Origin, SizeF.Empty - Direction);
+        }
+
         public PointF this[float t] => new PointF(
             Origin.X + Direction.Width * t,
             Origin.Y + Direction.Height * t);
 
-        public PointF? Trace(RenderArgs src, Predicate<ColorBgra> hit, bool backtrack = true)
+        public PointF? Trace(RectangleF bounds, Predicate<PointF> hit, float t)
         {
-            float t;
-            if (backtrack)
-            {
-                t = TraceEdge(src.Bounds, true);
-            }
-            else
-            {
-                t = 0;
-            }
-
             for (; ; t += 1.0f)
             {
                 PointF point = this[t];
 
-                if (!(point.X > -1f && point.Y > -1f && point.X < src.Width && point.Y < src.Height))
+                if (!bounds.Contains(point))
                 {
                     return null;
                 }
-                else if (hit(src.Surface.GetBilinearSample(point.X, point.Y)))
+                else if (hit(point))
                 {
                     return point;
                 }
             }
         }
 
-        public float TraceEdge(Rectangle bounds, bool backwards = false)
+        public float TraceEdge(Rectangle bounds)
         {
-            // Conditions flip if backwards
-            int x = Direction.Width > 0 ^ backwards ? bounds.Right - 1 : bounds.Left;
-            int y = Direction.Height > 0 ^ backwards ? bounds.Bottom - 1 : bounds.Top;
+            int x = Direction.Width > 0 ? bounds.Right : bounds.Left;
+            int y = Direction.Height > 0 ? bounds.Bottom : bounds.Top;
 
-            float tx = IntersectX(x);
-            float ty = IntersectY(y);
-
-            // Min when backwards == false and Max when backwards == true
-            return tx < ty ^ backwards ? tx : ty;
+            // Rays parallel to horizontal or vertical edges will not touch them
+            // In these cases only consider the other edges
+            if (Direction.Width == 0)
+            {
+                return IntersectY(y);
+            }
+            else if (Direction.Height == 0)
+            {
+                return IntersectX(x);
+            }
+            else
+            {
+                // Consider both edges, the lowest should touch the boundary
+                return Math.Min(IntersectX(x), IntersectY(y));
+            }
         }
 
         private float IntersectX(float x)
         {
-            // 0.0/0.0 == NaN, in this case the ray is already touching
-            float dx = x - Origin.X;
-            return dx == 0 ? 0 : dx / Direction.Width;
+            if (Direction.Width == 0)
+            {
+                throw new InvalidOperationException("None or infinite solutions");
+            }
+
+            return (x - Origin.X) / Direction.Width;
         }
 
         private float IntersectY(float y)
         {
-            // 0.0/0.0 == NaN, in this case the ray is already touching
-            float dy = y - Origin.Y;
-            return dy == 0 ? 0 : dy / Direction.Height;
+            if (Direction.Height == 0)
+            {
+                throw new InvalidOperationException("None or infinite solutions");
+            }
+
+            return (y - Origin.Y) / Direction.Height;
         }
     }
 }

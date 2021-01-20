@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Reflection;
 using PaintDotNet;
 using PaintDotNet.Effects;
@@ -91,6 +93,10 @@ namespace AssortedPlugins.LongShadow
             // Wavefront spans perpendicular to the direction
             SizeF step = new SizeF(-rayDirection.Height, rayDirection.Width);
 
+            // Small margin to prevent early ray death
+            Rectangle fatBounds = SrcArgs.Bounds;
+            fatBounds.Inflate(new Size(1, 1));
+
             for (int i = 0; i < traces.Length; i++)
             {
                 int j = i - traces.Length / 2;
@@ -98,8 +104,14 @@ namespace AssortedPlugins.LongShadow
                     center.X + step.Width * j,
                     center.Y + step.Height * j);
 
-                traces[i] = new Ray(origin, rayDirection).Trace(SrcArgs, color => color.A >= 128);
+                Ray ray = new Ray(origin, rayDirection);
+                float t = -ray.Flip().TraceEdge(SrcArgs.Bounds);
+
+                traces[i] = ray.Trace(fatBounds, point =>
+                    SrcArgs.Surface.GetBilinearSampleClamped(point.X, point.Y).A >= 128, t);
             }
+
+            //if (traces.All(trace => trace == null)) Debugger.Break();
 
             PdnGraphicsPath graphicsPath = new PdnGraphicsPath();
 
@@ -147,11 +159,15 @@ namespace AssortedPlugins.LongShadow
                 startIndex++;
             }
 
+            // Small margin means shape slightly overflows image leaving no artifacts
+            Rectangle fatBounds = EnvironmentParameters.SelectionBounds;
+            fatBounds.Inflate(new Size(1, 1));
+
             // Add reversed points around the edge of the selection to close the path
             for (int i = polygon.Count - 1; i >= 0; i--)
             {
                 Ray ray = new Ray(polygon[i], rayDirection);
-                polygon.Add(ray[ray.TraceEdge(EnvironmentParameters.SelectionBounds)]);
+                polygon.Add(ray[ray.TraceEdge(fatBounds)]);
             }
 
             return polygon.ToArray();
