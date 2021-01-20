@@ -112,7 +112,10 @@ namespace AssortedPlugins.LongShadow
                     break;
                 }
 
-                graphicsPath.AddPolygon(polygon);
+                if (polygon.Length >= 3)
+                {
+                    graphicsPath.AddPolygon(polygon);
+                }
             }
 
             DstArgs.Surface.Clear(ColorBgra.Transparent);
