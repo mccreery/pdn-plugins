@@ -51,10 +51,10 @@ namespace AssortedPlugins.LongShadow
             }
         }
 
-        public float TraceEdge(Rectangle bounds)
+        public float TraceEdge(RectangleF bounds)
         {
-            int x = Direction.Width > 0 ? bounds.Right : bounds.Left;
-            int y = Direction.Height > 0 ? bounds.Bottom : bounds.Top;
+            float x = Direction.Width > 0 ? bounds.Right : bounds.Left;
+            float y = Direction.Height > 0 ? bounds.Bottom : bounds.Top;
 
             // Rays parallel to horizontal or vertical edges will not touch them
             // In these cases only consider the other edges

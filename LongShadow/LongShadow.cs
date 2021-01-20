@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using PaintDotNet;
 using PaintDotNet.Effects;
 using PaintDotNet.IndirectUI;
@@ -86,32 +87,21 @@ namespace AssortedPlugins.LongShadow
         {
             // Number of rays is equal to the length of the diagonal
             int diagonal = (int)Math.Ceiling(Math.Sqrt(SrcArgs.Width * SrcArgs.Width + SrcArgs.Height * SrcArgs.Height));
-            PointF?[] traces = new PointF?[diagonal];
-
-            PointF center = new PointF(SrcArgs.Width / 2, SrcArgs.Height / 2);
 
             // Wavefront spans perpendicular to the direction
+            PointF center = new PointF(SrcArgs.Width / 2, SrcArgs.Height / 2);
             SizeF step = new SizeF(-rayDirection.Height, rayDirection.Width);
+            Ray wavefront = new Ray(center, step);
 
-            // Small margin to prevent early ray death
-            Rectangle fatBounds = SrcArgs.Bounds;
-            fatBounds.Inflate(new Size(1, 1));
-
-            for (int i = 0; i < traces.Length; i++)
+            Ray[] rays = new Ray[diagonal];
+            for (int i = 0; i < rays.Length; i++)
             {
-                int j = i - traces.Length / 2;
-                PointF origin = new PointF(
-                    center.X + step.Width * j,
-                    center.Y + step.Height * j);
-
-                Ray ray = new Ray(origin, rayDirection);
-                float t = -ray.Flip().TraceEdge(SrcArgs.Bounds);
-
-                traces[i] = ray.Trace(fatBounds, point =>
-                    SrcArgs.Surface.GetBilinearSampleClamped(point.X, point.Y).A >= 128, t);
+                PointF origin = wavefront[i - rays.Length / 2];
+                rays[i] = new Ray(origin, rayDirection);
             }
 
-            //if (traces.All(trace => trace == null)) Debugger.Break();
+            PointF?[] traces = RayTrace(rays, SrcArgs.Bounds, point =>
+                SrcArgs.Surface.GetBilinearSampleClamped(point.X, point.Y).A >= 128);
 
             PdnGraphicsPath graphicsPath = new PdnGraphicsPath();
 
@@ -138,6 +128,41 @@ namespace AssortedPlugins.LongShadow
             {
                 DstArgs.Graphics.DrawImage(SrcArgs.Bitmap, Point.Empty);
             }
+        }
+
+        private PointF?[] RayTrace(Ray[] rays, RectangleF bounds, Predicate<PointF> hit)
+        {
+            // Small margin prevents instant ray death
+            RectangleF fatBounds = bounds;
+            fatBounds.Inflate(1, 1);
+
+            PointF?[] traces = new PointF?[rays.Length];
+
+            const int numThreads = 4;
+            int chunkSize = rays.Length / numThreads;
+
+            Parallel.For(0, numThreads, threadIndex =>
+            {
+                int chunkStart = threadIndex * chunkSize;
+                int chunkEnd;
+                if (threadIndex == numThreads - 1)
+                {
+                    chunkEnd = traces.Length;
+                }
+                else
+                {
+                    chunkEnd = chunkStart + chunkSize;
+                }
+
+                for (int i = chunkStart; i < chunkEnd; i++)
+                {
+                    Ray ray = rays[i];
+
+                    float t = -ray.Flip().TraceEdge(bounds);
+                    traces[i] = ray.Trace(fatBounds, hit, t);
+                }
+            });
+            return traces;
         }
 
         private PointF[] GetNextPolygon(PointF?[] traces, ref int startIndex)
