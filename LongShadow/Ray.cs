@@ -66,12 +66,16 @@ namespace AssortedPlugins.LongShadow
 
         private float IntersectX(float x)
         {
-            return (x - Origin.X) / Direction.Width;
+            // 0.0/0.0 == NaN, in this case the ray is already touching
+            float dx = x - Origin.X;
+            return dx == 0 ? 0 : dx / Direction.Width;
         }
 
         private float IntersectY(float y)
         {
-            return (y - Origin.Y) / Direction.Height;
+            // 0.0/0.0 == NaN, in this case the ray is already touching
+            float dy = y - Origin.Y;
+            return dy == 0 ? 0 : dy / Direction.Height;
         }
     }
 }
