@@ -31,12 +31,29 @@ namespace AssortedPlugins.DropShadow
         {
         }
 
-        protected override RenderPhase[] Phases => new RenderPhase[] {
-            RenderOffset,
-            RenderSilhouette,
-            RenderBlur,
-            RenderSource
-        };
+        protected override RenderPhase[] Phases
+        {
+            get
+            {
+                List<RenderPhase> phases = new List<RenderPhase>();
+                phases.Add(RenderSilhouette);
+
+                if (spreadRadius > 0)
+                {
+                    phases.Add(RenderSpread);
+                }
+                if (blurRadius > 0)
+                {
+                    phases.Add(RenderBlur);
+                }
+                if (!shadowOnly)
+                {
+                    phases.Add(RenderBlendOver);
+                }
+
+                return phases.ToArray();
+            }
+        }
 
         protected override ControlInfo OnCreateConfigUI(PropertyCollection props)
         {
@@ -100,19 +117,9 @@ namespace AssortedPlugins.DropShadow
             blurRadius = newToken.GetProperty<Int32Property>(PropertyNames.BlurRadius).Value;
             inset = newToken.GetProperty<BooleanProperty>(PropertyNames.Inset).Value;
             shadowOnly = newToken.GetProperty<BooleanProperty>(PropertyNames.ShadowOnly).Value;
-        }
 
-        private void RenderSilhouette(RenderArgs dst, RenderArgs src, Rectangle rect)
-        {
-            if (spreadRadius == 0)
-            {
-                Recolor(dst, src, rect);
-            }
-            else
-            {
-                Kernel kernel = GetKernel();
-                Spread(dst, src, rect, kernel);
-            }
+            // Generate kernel once instead of per rectangle
+            kernel = GetKernel();
         }
 
         private void RenderBlur(RenderArgs dst, RenderArgs src, Rectangle rect)
@@ -124,36 +131,12 @@ namespace AssortedPlugins.DropShadow
             dst.Bitmap.UnlockBits(dstData);
         }
 
-        private void RenderSource(RenderArgs dst, RenderArgs src, Rectangle rect)
-        {
-            dst.Surface.CopySurface(src.Surface);
-            if (!shadowOnly)
-            {
-                // Blend original source, not phase source
-                BlendOver(dst.Surface, SrcArgs.Surface, rect);
-            }
-        }
-
-        /// <summary>
-        ///   Fills a rectangle with a solid color without changing the alpha, creating a silhouette effect.
-        /// </summary>
-        private void Recolor(RenderArgs dst, RenderArgs src, Rectangle rect)
-        {
-            for (int y = rect.Top; y < rect.Bottom; y++)
-            {
-                if (IsCancelRequested) return;
-
-                for (int x = rect.Left; x < rect.Right; x++)
-                {
-                    dst.Surface[x, y] = MultiplyAlpha(color, src.Surface[x, y].A);
-                }
-            }
-        }
+        private Kernel kernel;
 
         /// <summary>
         ///   Fills a rectangle with a solid color, applying spread to the alpha channel.
         /// </summary>
-        private void Spread(RenderArgs dst, RenderArgs src, Rectangle rect, Kernel kernel)
+        private void RenderSpread(RenderArgs dst, RenderArgs src, Rectangle rect)
         {
             for (int y = rect.Top; y < rect.Bottom; y++)
             {
@@ -172,7 +155,7 @@ namespace AssortedPlugins.DropShadow
             return color.NewAlpha((byte)Math.Round(color.A / 255.0 * alpha));
         }
 
-        private void BlendOver(Surface dst, Surface src, Rectangle rect)
+        private void RenderBlendOver(RenderArgs dst, RenderArgs src, Rectangle rect)
         {
             for (int y = rect.Top; y < rect.Bottom; y++)
             {
@@ -180,17 +163,30 @@ namespace AssortedPlugins.DropShadow
 
                 for (int x = rect.Left; x < rect.Right; x++)
                 {
-                    dst[x, y] = UserBlendOps.NormalBlendOp.ApplyStatic(dst[x, y], src[x, y]);
+                    dst.Surface[x, y] = UserBlendOps.NormalBlendOp.ApplyStatic(src.Surface[x, y], SrcArgs.Surface[x, y]);
                 }
             }
         }
 
         /// <summary>
-        ///   Copies the shifted image within the destination rectangle only.
+        ///   A single render pass which renders the shifted silhouette.
         /// </summary>
-        private void RenderOffset(RenderArgs dst, RenderArgs src, Rectangle dstRect)
+        private void RenderSilhouette(RenderArgs dst, RenderArgs src, Rectangle rect)
         {
-            dst.Surface.CopySurface(src.Surface, dstRect, new Size(offsetX, offsetY));
+            dst.Surface.CopySurface(src.Surface, rect, new Size(offsetX, offsetY));
+
+            for (int y = rect.Top; y < rect.Bottom; y++)
+            {
+                if (IsCancelRequested) return;
+
+                for (int x = rect.Left; x < rect.Right; x++)
+                {
+                    byte alpha = dst.Surface[x, y].A;
+                    if (inset) alpha = (byte)(255 - alpha);
+
+                    dst.Surface[x, y] = MultiplyAlpha(color, alpha);
+                }
+            }
         }
 
         private Kernel GetKernel()
