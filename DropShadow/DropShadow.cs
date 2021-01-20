@@ -120,6 +120,8 @@ namespace AssortedPlugins.DropShadow
             BitmapData srcData = src.Bitmap.LockBits(rect, ImageLockMode.ReadOnly, src.Bitmap.PixelFormat);
             BitmapData dstData = dst.Bitmap.LockBits(rect, ImageLockMode.WriteOnly, src.Bitmap.PixelFormat);
             RenderingKernels.GaussianBlur(dstData, srcData, new Rectangle[] { rect }, 0, 1, blurRadius);
+            src.Bitmap.UnlockBits(srcData);
+            dst.Bitmap.UnlockBits(dstData);
         }
 
         private void RenderSource(RenderArgs dst, RenderArgs src, Rectangle rect)
