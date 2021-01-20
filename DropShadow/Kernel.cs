@@ -27,7 +27,7 @@ namespace AssortedPlugins.DropShadow
             }
         }
 
-        public byte WeightedMaxAlpha(Surface surface, Point center)
+        public unsafe byte WeightedMaxAlpha(Surface surface, Point center)
         {
             Point location = center - anchor;
             Rectangle bounds = new Rectangle(location, size);
@@ -37,10 +37,11 @@ namespace AssortedPlugins.DropShadow
             for (int y = bounds.Top; y < bounds.Bottom; y++)
             {
                 float[] row = kernelAlpha[y - location.Y];
+                ColorBgra* rowPointer = surface.GetRowAddressUnchecked(y) + bounds.Left;
 
                 for (int x = bounds.Left; x < bounds.Right; x++)
                 {
-                    byte alpha = surface[x, y].A;
+                    byte alpha = (*rowPointer++).A;
 
                     alpha = (byte)Math.Round(alpha * row[x - location.X]);
                     maxAlpha = Math.Max(maxAlpha, alpha);
