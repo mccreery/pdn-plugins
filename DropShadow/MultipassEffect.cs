@@ -1,6 +1,7 @@
 ﻿using PaintDotNet;
 using PaintDotNet.Effects;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -36,9 +37,20 @@ namespace AssortedPlugins.DropShadow
 
         protected abstract RenderPhase[] Phases { get; }
 
-        // This implementation should receive the entire image in accordance with the schedule
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
         {
+            OnRender();
+        }
+
+        protected void OnRender()
+        {
+            // If the selection is one or two rectangular regions, the renderer passes those full rectangles.
+            // Otherwise, it passes thousands of scanline rectangles.
+            // For consistency and to be able to parallelize normal rectangular selections,
+            // ignore the given rects and slice the selection bounding box manually.
+            // (The normal method of slicing rectangles is internal)
+            IList<Rectangle> renderRects = Tileize(EnvironmentParameters.SelectionBounds, 128);
+
             // Cache phases
             RenderPhase[] phases = Phases;
             RenderArgs[] phaseResults = new RenderArgs[phases.Length + 1];
@@ -55,20 +67,20 @@ namespace AssortedPlugins.DropShadow
 
             // Divide the work equally between threads
             // The last thread will get any remainder
-            int chunkSize = renderRects.Length / NUM_THREADS;
+            int chunkSize = renderRects.Count / NUM_THREADS;
 
             // Synchronize between phases using a barrier
             using (Barrier barrier = new Barrier(NUM_THREADS))
             {
                 Parallel.For(0, NUM_THREADS, threadIndex =>
                 {
-                    int threadStartIndex = startIndex + threadIndex * chunkSize;
+                    int threadStartIndex = threadIndex * chunkSize;
 
                     // Last thread will get any remainder
                     int threadEndIndex;
                     if (threadIndex == NUM_THREADS - 1)
                     {
-                        threadEndIndex = startIndex + length;
+                        threadEndIndex = renderRects.Count;
                     }
                     else
                     {
@@ -86,6 +98,28 @@ namespace AssortedPlugins.DropShadow
                     }
                 });
             }
+        }
+
+        /// <summary>
+        ///   Divides a bounding rectangle into equal-sized chunks.
+        /// </summary>
+        /// <returns>An array of chunks covering the entire area of bounds.</returns>
+        /// <seealso cref="PaintDotNet.Rendering.TileizeRenderer{TPixel}"/>
+        private static IList<Rectangle> Tileize(Rectangle bounds, int tileSize)
+        {
+            List<Rectangle> tiles = new List<Rectangle>();
+
+            for (int y = bounds.Top; y < bounds.Bottom; y += tileSize)
+            {
+                for (int x = bounds.Left; x < bounds.Right; x += tileSize)
+                {
+                    int right = Math.Min(x + tileSize, bounds.Right);
+                    int bottom = Math.Min(y + tileSize, bounds.Bottom);
+
+                    tiles.Add(new Rectangle(x, y, right - x, bottom - y));
+                }
+            }
+            return tiles;
         }
     }
 }
