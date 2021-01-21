@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Reflection;
 using PaintDotNet;
 using PaintDotNet.AppModel;
+using PaintDotNet.Direct2D1.Effects;
 using PaintDotNet.Effects;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
@@ -18,11 +19,13 @@ namespace AssortedPlugins.Recolor
         public enum PropertyName
         {
             Color,
-            Flat
+            Flat,
+            Gamma
         }
 
         private ColorBgra targetColor;
         private bool flat;
+        private double gamma;
 
         public Recolor() : base(
                 typeof(Recolor).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
@@ -43,6 +46,12 @@ namespace AssortedPlugins.Recolor
             configUI.SetPropertyControlValue(PropertyName.Flat, ControlInfoPropertyNames.DisplayName, "");
             configUI.SetPropertyControlValue(PropertyName.Flat, ControlInfoPropertyNames.Description, "Flat");
 
+            configUI.SetPropertyControlType(PropertyName.Gamma, PropertyControlType.Slider);
+            configUI.SetPropertyControlValue(PropertyName.Gamma, ControlInfoPropertyNames.SliderSmallChange, 0.05);
+            configUI.SetPropertyControlValue(PropertyName.Gamma, ControlInfoPropertyNames.SliderLargeChange, 0.1);
+            configUI.SetPropertyControlValue(PropertyName.Gamma, ControlInfoPropertyNames.UpDownIncrement, 0.1);
+            configUI.SetPropertyControlValue(PropertyName.Gamma, ControlInfoPropertyNames.DisplayName, "Gamma");
+
             return configUI;
         }
 
@@ -52,6 +61,7 @@ namespace AssortedPlugins.Recolor
 
             props.Add(new Int32Property(PropertyName.Color, (int)(uint)EnvironmentParameters.PrimaryColor));
             props.Add(new BooleanProperty(PropertyName.Flat, false));
+            props.Add(new DoubleProperty(PropertyName.Gamma, 1, 0, 1));
 
             return new PropertyCollection(props);
         }
@@ -70,8 +80,10 @@ namespace AssortedPlugins.Recolor
 
             targetColor = (ColorBgra)(uint)newToken.GetProperty<Int32Property>(PropertyName.Color).Value;
             flat = newToken.GetProperty<BooleanProperty>(PropertyName.Flat).Value;
+            gamma = newToken.GetProperty<DoubleProperty>(PropertyName.Gamma).Value;
 
             FindMaxComponents();
+            CacheGammaCorrection();
         }
 
         private byte maxValue;
@@ -95,6 +107,25 @@ namespace AssortedPlugins.Recolor
 
                     maxValue = Math.Max(maxValue, value);
                     maxAlpha = Math.Max(maxAlpha, srcColor.A);
+                }
+            }
+        }
+
+        private byte[] gammaLookup = new byte[256];
+
+        /// <summary>
+        ///   Populates <see cref="gammaLookup"/> if gamma != 1.0.
+        /// </summary>
+        private void CacheGammaCorrection()
+        {
+            if (gamma != 1.0)
+            {
+                for (int i = 0; i < 256; i++)
+                {
+                    double valueD = ByteUtil.ToScalingFloat((byte)i);
+                    valueD = Math.Pow(valueD, gamma) * 255.0;
+                    // Round and cast in one without considering negative values
+                    gammaLookup[i] = (byte)(valueD + 0.5);
                 }
             }
         }
@@ -145,6 +176,11 @@ namespace AssortedPlugins.Recolor
                         byte value = Value(srcColor);
                         // Saturate value
                         value = ByteUtil.FastUnscale(value, maxValue);
+
+                        if (gamma != 1.0)
+                        {
+                            value = gammaLookup[value];
+                        }
 
                         // Rescale to target color and alpha
                         dst[x, y] = ColorBgra.FromBgra(
