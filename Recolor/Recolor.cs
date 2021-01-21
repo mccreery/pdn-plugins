@@ -102,10 +102,14 @@ namespace AssortedPlugins.Recolor
                 for (int x = 0; x < SrcArgs.Width; x++)
                 {
                     ColorBgra srcColor = SrcArgs.Surface[x, y];
-                    // Calculate value from components
-                    byte value = Value(srcColor);
 
-                    maxValue = Math.Max(maxValue, value);
+                    // Only consider nontransparent pixels
+                    if (srcColor.A > 0)
+                    {
+                        // Calculate value from components
+                        byte value = Value(srcColor);
+                        maxValue = Math.Max(maxValue, value);
+                    }
                     maxAlpha = Math.Max(maxAlpha, srcColor.A);
                 }
             }
