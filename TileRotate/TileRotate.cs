@@ -12,7 +12,19 @@ namespace AssortedPlugins.TileRotate
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
     public class TileRotate : PropertyBasedEffect
     {
-        private Size offset;
+        public enum PropertyName
+        {
+            Mode
+        }
+
+        public enum Mode
+        {
+            SwapLeftRight,
+            SwapTopBottom,
+            SwapQuadrants
+        }
+
+        private Mode mode;
 
         public TileRotate() : base(
             typeof(TileRotate).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
@@ -26,69 +38,24 @@ namespace AssortedPlugins.TileRotate
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
-            configUI.SetPropertyControlValue("mode", ControlInfoPropertyNames.DisplayName, "Mode");
-            configUI.SetPropertyControlType("mode", PropertyControlType.RadioButton);
+            configUI.SetPropertyControlType(PropertyName.Mode, PropertyControlType.RadioButton);
+            configUI.SetPropertyControlValue(PropertyName.Mode, ControlInfoPropertyNames.DisplayName, "");
 
-            PropertyControlInfo modeControl = configUI.FindControlForPropertyName("mode");
-            modeControl.SetValueDisplayName(OffsetMode.Relative, "Relative");
-            modeControl.SetValueDisplayName(OffsetMode.Absolute, "Absolute");
-
-            configUI.SetPropertyControlType("pan", PropertyControlType.PanAndSlider);
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.DisplayName, "Relative Offset");
-
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.SliderSmallChangeX, 0.05);
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.SliderLargeChangeX, 0.25);
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.UpDownIncrementX, 0.01);
-
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.SliderSmallChangeY, 0.05);
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.SliderLargeChangeY, 0.25);
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.UpDownIncrementY, 0.01);
-
-            ImageResource underlay = ImageResource.FromImage(EnvironmentParameters.SourceSurface.CreateAliasedBitmap(EnvironmentParameters.SelectionBounds));
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.StaticImageUnderlay, GetTiledUnderlay());
-
-            configUI.SetPropertyControlType("offsetX", PropertyControlType.Slider);
-            configUI.SetPropertyControlValue("offsetX", ControlInfoPropertyNames.DisplayName, "Absolute X Offset");
-            configUI.SetPropertyControlType("offsetY", PropertyControlType.Slider);
-            configUI.SetPropertyControlValue("offsetY", ControlInfoPropertyNames.DisplayName, "Absolute Y Offset");
+            PropertyControlInfo Amount1Control = configUI.FindControlForPropertyName(PropertyName.Mode);
+            Amount1Control.SetValueDisplayName(Mode.SwapLeftRight, "Swap left and right halves");
+            Amount1Control.SetValueDisplayName(Mode.SwapTopBottom, "Swap top and bottom halves");
+            Amount1Control.SetValueDisplayName(Mode.SwapQuadrants, "Swap diagonal quadrants");
 
             return configUI;
-        }
-
-        private ImageResource GetTiledUnderlay()
-        {
-            Image selection = EnvironmentParameters.SourceSurface.CreateAliasedBitmap(
-                EnvironmentParameters.SelectionBounds);
-
-            Image underlay = new Bitmap(selection.Size.Width * 2, selection.Size.Height * 2);
-            Graphics g = Graphics.FromImage(underlay);
-
-            g.DrawImage(selection, 0, 0);
-            g.DrawImage(selection, selection.Width, 0);
-            g.DrawImage(selection, 0, selection.Height);
-            g.DrawImage(selection, selection.Width, selection.Height);
-
-            return ImageResource.FromImage(underlay);
         }
 
         protected override PropertyCollection OnCreatePropertyCollection()
         {
             List<Property> props = new List<Property>();
 
-            props.Add(StaticListChoiceProperty.CreateForEnum<OffsetMode>("mode", OffsetMode.Relative, false));
-            props.Add(new DoubleVectorProperty("pan", Pair.Create(0.5, 0.5), Pair.Create(-1.0, -1.0), Pair.Create(1.0, 1.0)));
+            props.Add(StaticListChoiceProperty.CreateForEnum<Mode>(PropertyName.Mode, Mode.SwapQuadrants));
 
-            Rectangle bounds = EnvironmentParameters.SelectionBounds;
-            props.Add(new Int32Property("offsetX", (int)Math.Round(bounds.Width / 2.0), -bounds.Width, bounds.Width));
-            props.Add(new Int32Property("offsetY", (int)Math.Round(bounds.Height / 2.0), -bounds.Height, bounds.Height));
-
-            List<PropertyCollectionRule> rules = new List<PropertyCollectionRule>();
-
-            rules.Add(new ReadOnlyBoundToValueRule<object, StaticListChoiceProperty>("pan", "mode", OffsetMode.Relative, true));
-            rules.Add(new ReadOnlyBoundToValueRule<object, StaticListChoiceProperty>("offsetX", "mode", OffsetMode.Absolute, true));
-            rules.Add(new ReadOnlyBoundToValueRule<object, StaticListChoiceProperty>("offsetY", "mode", OffsetMode.Absolute, true));
-
-            return new PropertyCollection(props, rules);
+            return new PropertyCollection(props);
         }
 
         protected override void OnCustomizeConfigUIWindowProperties(PropertyCollection props)
@@ -100,41 +67,13 @@ namespace AssortedPlugins.TileRotate
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
-            Rectangle bounds = EnvironmentParameters.SelectionBounds;
 
-            if ((OffsetMode)newToken.GetProperty<StaticListChoiceProperty>("mode").Value == OffsetMode.Relative)
-            {
-                Pair<double, double> offsetD = newToken.GetProperty<DoubleVectorProperty>("pan").Value;
-                offset = new Size(
-                    (int)Math.Round(bounds.Width * offsetD.First),
-                    (int)Math.Round(bounds.Height * offsetD.Second));
-            }
-            else
-            {
-                offset = new Size(
-                    newToken.GetProperty<Int32Property>("offsetX").Value,
-                    newToken.GetProperty<Int32Property>("offsetY").Value);
-            }
-
-            offset.Width = FloorMod(offset.Width, bounds.Width);
-            offset.Height = FloorMod(offset.Height, bounds.Height);
+            mode = (Mode)newToken.GetProperty<StaticListChoiceProperty>(PropertyName.Mode).Value;
         }
-
-        private readonly Pair<Rectangle, Point>[] srcDst = new Pair<Rectangle, Point>[4];
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
         {
             Rectangle bounds = EnvironmentParameters.SelectionBounds;
-
-            srcDst[0] = Pair.Create(new Rectangle(bounds.Location, bounds.Size - offset), bounds.Location + offset);
-            srcDst[1] = Pair.Create( new Rectangle(bounds.Location + bounds.Size - offset, offset), bounds.Location);
-
-            srcDst[2] = Pair.Create(
-                new Rectangle(bounds.Location + new Size(0, bounds.Height - offset.Height), new Size(bounds.Width - offset.Width, offset.Height)),
-                bounds.Location + new Size(offset.Width, 0));
-            srcDst[3] = Pair.Create(
-                new Rectangle(bounds.Location + new Size(bounds.Width - offset.Width, 0), new Size(offset.Width, bounds.Height - offset.Height)),
-                bounds.Location + new Size(0, offset.Height));
 
             int endIndex = startIndex + length;
             for (int i = startIndex; i < endIndex; i++)
@@ -145,9 +84,36 @@ namespace AssortedPlugins.TileRotate
 
         void Render(Surface dst, Surface src, Rectangle rect)
         {
-            foreach (Pair<Rectangle, Point> p in srcDst)
+            Rectangle selection = EnvironmentParameters.SelectionBounds;
+
+            Point topLeft = selection.Location;
+            Point topRight = new Point(selection.X + selection.Width / 2, selection.Y);
+            Point bottomLeft = new Point(selection.X, selection.Y + selection.Height / 2);
+            Point bottomRight = new Point(selection.X + selection.Width / 2, selection.Y + selection.Height / 2);
+
+            Size chunkSize;
+            switch (mode)
             {
-                CopySurfacePart(dst, rect, p.Second, src, p.First);
+                case Mode.SwapLeftRight:
+                    chunkSize = new Size(selection.Width / 2, selection.Height);
+
+                    CopySurfacePart(dst, rect, topLeft, src, new Rectangle(topRight, chunkSize));
+                    CopySurfacePart(dst, rect, topRight, src, new Rectangle(topLeft, chunkSize));
+                    break;
+                case Mode.SwapTopBottom:
+                    chunkSize = new Size(selection.Width, selection.Height / 2);
+
+                    CopySurfacePart(dst, rect, topLeft, src, new Rectangle(bottomLeft, chunkSize));
+                    CopySurfacePart(dst, rect, bottomLeft, src, new Rectangle(topLeft, chunkSize));
+                    break;
+                case Mode.SwapQuadrants:
+                    chunkSize = new Size(selection.Width / 2, selection.Height / 2);
+
+                    CopySurfacePart(dst, rect, topLeft, src, new Rectangle(bottomRight, chunkSize));
+                    CopySurfacePart(dst, rect, topRight, src, new Rectangle(bottomLeft, chunkSize));
+                    CopySurfacePart(dst, rect, bottomLeft, src, new Rectangle(topRight, chunkSize));
+                    CopySurfacePart(dst, rect, bottomRight, src, new Rectangle(topLeft, chunkSize));
+                    break;
             }
         }
 
@@ -161,11 +127,6 @@ namespace AssortedPlugins.TileRotate
             srcRect = new Rectangle(dstRectClamped.Location - (Size)dstRect.Location + (Size)srcRect.Location, dstRectClamped.Size);
 
             dst.CopySurface(src, dstOffset, srcRect);
-        }
-
-        private static int FloorMod(int a, int b)
-        {
-            return ((a % b) + b) % b;
         }
     }
 

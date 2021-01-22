@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 
 // See SharedAssemblyInfo.cs for other attributes
-[assembly: AssemblyTitle("Tile Rotate")]
+[assembly: AssemblyTitle("Swap Quadrants")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyVersion("0.1")]
 
