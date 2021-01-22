@@ -19,12 +19,10 @@ namespace AssortedPlugins.Recolor
         public enum PropertyName
         {
             Color,
-            Flat,
             Gamma
         }
 
         private ColorBgra targetColor;
-        private bool flat;
         private double gamma;
 
         public Recolor() : base(
@@ -42,15 +40,12 @@ namespace AssortedPlugins.Recolor
             configUI.SetPropertyControlType(PropertyName.Color, PropertyControlType.ColorWheel);
             configUI.SetPropertyControlValue(PropertyName.Color, ControlInfoPropertyNames.DisplayName, "Color");
 
-            configUI.SetPropertyControlType(PropertyName.Flat, PropertyControlType.CheckBox);
-            configUI.SetPropertyControlValue(PropertyName.Flat, ControlInfoPropertyNames.DisplayName, "");
-            configUI.SetPropertyControlValue(PropertyName.Flat, ControlInfoPropertyNames.Description, "Flat");
-
             configUI.SetPropertyControlType(PropertyName.Gamma, PropertyControlType.Slider);
             configUI.SetPropertyControlValue(PropertyName.Gamma, ControlInfoPropertyNames.SliderSmallChange, 0.05);
             configUI.SetPropertyControlValue(PropertyName.Gamma, ControlInfoPropertyNames.SliderLargeChange, 0.1);
             configUI.SetPropertyControlValue(PropertyName.Gamma, ControlInfoPropertyNames.UpDownIncrement, 0.1);
             configUI.SetPropertyControlValue(PropertyName.Gamma, ControlInfoPropertyNames.DisplayName, "Gamma");
+            configUI.SetPropertyControlValue(PropertyName.Gamma, ControlInfoPropertyNames.Description, "Gamma less than 1 compensates for the darkening side effect of multiplying color.");
 
             return configUI;
         }
@@ -60,14 +55,9 @@ namespace AssortedPlugins.Recolor
             List<Property> props = new List<Property>();
 
             props.Add(new Int32Property(PropertyName.Color, (int)(uint)EnvironmentParameters.PrimaryColor));
-            props.Add(new BooleanProperty(PropertyName.Flat, false));
             props.Add(new DoubleProperty(PropertyName.Gamma, 1, 0, 1));
 
-            List<PropertyCollectionRule> rules = new List<PropertyCollectionRule>();
-
-            rules.Add(new ReadOnlyBoundToBooleanRule(PropertyName.Gamma, PropertyName.Flat, false));
-
-            return new PropertyCollection(props, rules);
+            return new PropertyCollection(props);
         }
 
         protected override void OnCustomizeConfigUIWindowProperties(PropertyCollection props)
@@ -83,7 +73,6 @@ namespace AssortedPlugins.Recolor
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
 
             targetColor = (ColorBgra)(uint)newToken.GetProperty<Int32Property>(PropertyName.Color).Value;
-            flat = newToken.GetProperty<BooleanProperty>(PropertyName.Flat).Value;
             gamma = newToken.GetProperty<DoubleProperty>(PropertyName.Gamma).Value;
 
             FindMaxComponents();
@@ -162,7 +151,7 @@ namespace AssortedPlugins.Recolor
                     alpha = ByteUtil.FastScale(alpha, targetColor.A);
 
                     // Where maxValue == 0, the image is all black
-                    if (flat || maxValue == 0)
+                    if (maxValue == 0)
                     {
                         dst[x, y] = targetColor.NewAlpha(alpha);
                     }

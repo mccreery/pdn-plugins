@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorChannels", "ColorChann
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Recolor", "Recolor\Recolor.csproj", "{62021A13-7702-46CE-BF8E-8DF387142E2E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stencil", "Stencil\Stencil.csproj", "{0D580561-F7CA-4594-B55F-82EC7AC15850}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{62021A13-7702-46CE-BF8E-8DF387142E2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{62021A13-7702-46CE-BF8E-8DF387142E2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{62021A13-7702-46CE-BF8E-8DF387142E2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D580561-F7CA-4594-B55F-82EC7AC15850}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D580561-F7CA-4594-B55F-82EC7AC15850}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D580561-F7CA-4594-B55F-82EC7AC15850}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D580561-F7CA-4594-B55F-82EC7AC15850}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
