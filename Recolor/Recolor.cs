@@ -63,7 +63,11 @@ namespace AssortedPlugins.Recolor
             props.Add(new BooleanProperty(PropertyName.Flat, false));
             props.Add(new DoubleProperty(PropertyName.Gamma, 1, 0, 1));
 
-            return new PropertyCollection(props);
+            List<PropertyCollectionRule> rules = new List<PropertyCollectionRule>();
+
+            rules.Add(new ReadOnlyBoundToBooleanRule(PropertyName.Gamma, PropertyName.Flat, false));
+
+            return new PropertyCollection(props, rules);
         }
 
         protected override void OnCustomizeConfigUIWindowProperties(PropertyCollection props)
