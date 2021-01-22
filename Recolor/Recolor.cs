@@ -111,7 +111,7 @@ namespace AssortedPlugins.Recolor
                     if (srcColor.A > 0)
                     {
                         // Calculate value from components
-                        byte value = Value(srcColor);
+                        byte value = srcColor.GetIntensityByte();
                         maxValue = Math.Max(maxValue, value);
                     }
                     maxAlpha = Math.Max(maxAlpha, srcColor.A);
@@ -136,18 +136,6 @@ namespace AssortedPlugins.Recolor
                     gammaLookup[i] = (byte)(valueD + 0.5);
                 }
             }
-        }
-
-        /// <summary>
-        ///   Calculates the value component of a color.
-        /// </summary>
-        /// <param name="color">The input coor.</param>
-        /// <returns>The average brightness over the components of the color.</returns>
-        private byte Value(ColorBgra color)
-        {
-            float average = (color.B + color.G + color.R) / 3.0f;
-            // Round and cast in one without considering negative values
-            return (byte)(average + 0.5f);
         }
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
@@ -181,7 +169,7 @@ namespace AssortedPlugins.Recolor
                     else
                     {
                         // Calculate value from components
-                        byte value = Value(srcColor);
+                        byte value = srcColor.GetIntensityByte();
                         // Saturate value
                         value = ByteUtil.FastUnscale(value, maxValue);
 
