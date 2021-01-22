@@ -1,63 +1,88 @@
+using PaintDotNet;
 using System;
 using System.Drawing;
-using PaintDotNet;
 
 namespace AssortedPlugins.GrowAndShrink
 {
     public class Kernel
     {
-        private readonly Size size;
-        private readonly Point anchor;
-        private readonly double[,] kernelAlpha;
+        /** <value>The kernel's bounding box centered around the origin.</value> */
+        public Rectangle Bounds { get; }
+
+        struct Range
+        {
+            public int lo;
+            public int hi;
+        }
+        private Range[] ranges;
 
         public Kernel(Bitmap image)
         {
-            size = image.Size;
-            anchor = new Point(image.Width / 2, image.Height / 2);
+            // Centered around the origin
+            Bounds = new Rectangle(
+                -image.Width / 2,
+                -image.Height / 2,
+                image.Width,
+                image.Height);
 
-            kernelAlpha = new double[image.Height, image.Width];
-            for(int y = 0; y < image.Height; y++)
+            ranges = new Range[Bounds.Height];
+            for (int y = 0; y < ranges.Length; y++)
             {
-                for(int x = 0; x < image.Width; x++)
-                {
-                    kernelAlpha[y, x] = image.GetPixel(x, y).A / 255.0;
-                }
+                int lo, hi;
+                for (lo = 0; lo < image.Width && image.GetPixel(lo, y).A < 128; lo++) ;
+                for (hi = image.Width; --hi >= 0 && image.GetPixel(hi, y).A < 128;) ;
+                ++hi;
+
+                ranges[y].lo = lo;
+                ranges[y].hi = hi;
             }
         }
 
-        public byte WeightedMaxAlpha(Surface surface, int x, int y)
+        /**
+         * <summary>Finds the maximum or minimum alpha value in the neighborhood.</summary>
+         * <param name="surface">The surface to search.</param>
+         * <param name="point">The origin of the search, with the neighborhood centered around it.</param>
+         * <param name="min">Set to <c>true</c> to find the minimum alpha instead of maximum.</param>
+         * <returns>The maximum (default) or minimum alpha value in the neighborhood around <paramref name="point"/>.</returns>
+         */
+        public unsafe byte ExtremeAlpha(Surface surface, Point point, bool min = false)
         {
-            x -= anchor.X;
-            y -= anchor.Y;
+            // The bounds of the neighborhood relative to the surface
+            Rectangle rect = Bounds;
+            rect.Offset(point);
+
+            // Avoid repeating min/max inside and outside the loop
+            int top = Math.Max(surface.Bounds.Top, rect.Top);
+            int bottom = Math.Min(surface.Bounds.Bottom, rect.Bottom);
 
             byte maxAlpha = 0;
-            for(int yOffset = 0; yOffset < size.Height; yOffset++)
+            for (int y = top; y < bottom; y++)
             {
-                for(int xOffset = 0; xOffset < size.Width; xOffset++)
+                // Unsafe surface access is more efficient
+                ColorBgra* rowPtr = surface.GetRowAddressUnchecked(y);
+
+                Range range = ranges[y - rect.Top];
+                int left = Math.Max(surface.Bounds.Left, rect.Left + range.lo);
+                int right = Math.Min(surface.Bounds.Right, rect.Left + range.hi);
+
+                for (int x = left; x < right; x++)
                 {
-                    byte alpha = surface.GetPointZeroPad(x + xOffset, y + yOffset).A;
+                    // Invert alpha (first time) to find minimum
+                    byte alpha = min ? (byte)~rowPtr[x].A : rowPtr[x].A;
 
-                    alpha = (byte)Math.Round(alpha * kernelAlpha[yOffset, xOffset]);
-                    maxAlpha = Math.Max(maxAlpha, alpha);
-
-                    // Short circuit case - we can't get any more opaque
-                    if(maxAlpha == 255)
+                    if (alpha > maxAlpha)
                     {
-                        // hehe
-                        goto Short;
+                        maxAlpha = alpha;
+                        if (maxAlpha == 255)
+                        {
+                            goto BreakOuter;
+                        }
                     }
                 }
             }
-Short:
-            return maxAlpha;
-        }
-    }
-
-    public static class SurfaceExtensions
-    {
-        public static ColorBgra GetPointZeroPad(this Surface surface, int x, int y)
-        {
-            return surface.Bounds.Contains(x, y) ? surface[x, y] : ColorBgra.TransparentBlack;
+        BreakOuter:
+            // Invert alpha (second time) to find minimum
+            return min ? (byte)~maxAlpha : maxAlpha;
         }
     }
 }

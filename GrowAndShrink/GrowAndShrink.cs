@@ -7,16 +7,15 @@ using PaintDotNet;
 using PaintDotNet.Effects;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
+using static PaintDotNet.UserBlendOps;
 
 namespace AssortedPlugins.GrowAndShrink
 {
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
     public class GrowAndShrink : PropertyBasedEffect
     {
-        private Method method;
-        private int outlineWidth;
+        private int radius;
         private ColorBgra outlineColor;
-        private SmoothingMode smoothingMode;
 
         public GrowAndShrink() : base(
                 typeof(GrowAndShrink).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
@@ -30,24 +29,11 @@ namespace AssortedPlugins.GrowAndShrink
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
-            configUI.SetPropertyControlType(nameof(method), PropertyControlType.DropDown);
-            configUI.SetPropertyControlValue(nameof(method), ControlInfoPropertyNames.DisplayName, "Method");
+            configUI.SetPropertyControlType(nameof(radius), PropertyControlType.Slider);
+            configUI.SetPropertyControlValue(nameof(radius), ControlInfoPropertyNames.DisplayName, "Radius");
 
-            PropertyControlInfo methodControl = configUI.FindControlForPropertyName(nameof(method));
-            methodControl.SetValueDisplayName(Method.EdgeDetection, "Edge Detection (faster)");
-            methodControl.SetValueDisplayName(Method.Neighborhood, "Neighborhood (slower)");
-
-            configUI.SetPropertyControlType(nameof(outlineWidth), PropertyControlType.Slider);
-            configUI.SetPropertyControlValue(nameof(outlineWidth), ControlInfoPropertyNames.DisplayName, "Outline Width");
-
-            configUI.SetPropertyControlType(nameof(outlineColor),
-                PropertyControlType.ColorWheel);
-            configUI.SetPropertyControlValue(nameof(outlineColor),
-                ControlInfoPropertyNames.DisplayName, "Outline Color");
-
-            configUI.SetPropertyControlType(nameof(smoothingMode), PropertyControlType.CheckBox);
-            configUI.SetPropertyControlValue(nameof(smoothingMode), ControlInfoPropertyNames.DisplayName, "");
-            configUI.SetPropertyControlValue(nameof(smoothingMode), ControlInfoPropertyNames.Description, "Antialiasing");
+            configUI.SetPropertyControlType(nameof(outlineColor), PropertyControlType.ColorWheel);
+            configUI.SetPropertyControlValue(nameof(outlineColor), ControlInfoPropertyNames.DisplayName, "Color");
 
             return configUI;
         }
@@ -57,11 +43,8 @@ namespace AssortedPlugins.GrowAndShrink
             List<Property> props = new List<Property>();
             ColorBgra primaryColor = EnvironmentParameters.PrimaryColor;
 
-            props.Add(StaticListChoiceProperty.CreateForEnum<Method>(nameof(method), Method.EdgeDetection, false));
-            props.Add(new Int32Property(nameof(outlineWidth), 10, 0, 50));
+            props.Add(new Int32Property(nameof(radius), 0, -50, 50));
             props.Add(new Int32Property(nameof(outlineColor), (int)(uint)EnvironmentParameters.PrimaryColor));
-
-            props.Add(new BooleanProperty(nameof(smoothingMode), false));
 
             return new PropertyCollection(props);
         }
@@ -78,11 +61,8 @@ namespace AssortedPlugins.GrowAndShrink
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
 
-            method = (Method)newToken.GetProperty<StaticListChoiceProperty>(nameof(method)).Value;
-            outlineWidth = newToken.GetProperty<Int32Property>(nameof(outlineWidth)).Value;
-            outlineColor = (ColorBgra)(uint)newToken.GetProperty<Int32Property>(nameof(outlineColor)).Value;
-            smoothingMode = newToken.GetProperty<BooleanProperty>(nameof(smoothingMode)).Value
-                ? SmoothingMode.AntiAlias : SmoothingMode.Default;
+            radius = newToken.GetProperty<Int32Property>(nameof(radius)).Value;
+            outlineColor = ColorBgra.FromUInt32((uint)newToken.GetProperty<Int32Property>(nameof(outlineColor)).Value);
         }
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
@@ -98,34 +78,61 @@ namespace AssortedPlugins.GrowAndShrink
 
         private void Render(Surface dst, Surface src, Rectangle rect, Kernel kernel)
         {
-            if(outlineWidth == 0)
+            if (radius == 0)
             {
                 dst.CopySurface(src, rect.Location, rect);
                 return;
             }
 
-            for(int y = rect.Top; y < rect.Bottom; y++)
-            {
-                if(IsCancelRequested) { return; }
-                for(int x = rect.Left; x < rect.Right; x++)
-                {
-                    byte maxAlpha = kernel.WeightedMaxAlpha(src, x, y);
-                    byte multipliedAlpha = (byte)Math.Round(outlineColor.A * (maxAlpha / 255.0));
+            BitMask mask = GetMask(src, rect, kernel);
 
-                    ColorBgra color = outlineColor.NewAlpha(multipliedAlpha);
-                    dst[x, y] = UserBlendOps.NormalBlendOp.ApplyStatic(color, src[x, y]);
+            foreach ((Point point, bool marked) in mask)
+            {
+                if (marked)
+                {
+                    ColorBgra dstColor = src[point];
+                    dstColor = NormalBlendOp.ApplyStatic(outlineColor, dstColor);
+
+                    byte alpha = kernel.ExtremeAlpha(src, point, radius < 0);
+                    dst[point] = dstColor.NewAlpha((byte)(dstColor.A * alpha / 255));
+                }
+                else
+                {
+                    dst[point] = src[point];
                 }
             }
         }
 
+        private BitMask GetMask(Surface src, Rectangle rect, Kernel kernel)
+        {
+            BitMask mask = new BitMask(rect);
+            Rectangle influence = rect.Inflate(kernel.Bounds);
+            influence.Intersect(src.Bounds);
+
+            Point point = new Point();
+            for (point.Y = influence.Top; point.Y < influence.Bottom; point.Y++)
+            {
+                for (point.X = influence.Left; point.X < influence.Right; point.X++)
+                {
+                    byte a = src[point].A;
+                    if (a != 0 && a != 255)
+                    {
+                        Rectangle markedRect = kernel.Bounds;
+                        markedRect.Offset(point);
+                        mask.MarkRect(markedRect);
+                    }
+                }
+            }
+            return mask;
+        }
+
         private Kernel GetKernel()
         {
-            int size = Math.Abs(outlineWidth)*2 + 1;
+            int size = Math.Abs(radius)*2 + 1;
 
             Bitmap bitmap = new Bitmap(size, size);
             Graphics g = Graphics.FromImage(bitmap);
 
-            g.SmoothingMode = smoothingMode;
             g.PixelOffsetMode = PixelOffsetMode.Half;
             g.FillEllipse(Brushes.Black, 0, 0, bitmap.Width, bitmap.Height);
             return new Kernel(bitmap);
