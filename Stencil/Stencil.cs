@@ -13,9 +13,17 @@ namespace AssortedPlugins.Stencil
     {
         public enum PropertyNames
         {
+            Type,
             Color
         }
 
+        public enum Type
+        {
+            Cutout,
+            Stencil
+        }
+
+        private Type type;
         private ColorBgra stencilColor;
 
         public Stencil() : base(
@@ -30,6 +38,12 @@ namespace AssortedPlugins.Stencil
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
+            configUI.SetPropertyControlType(PropertyNames.Type, PropertyControlType.RadioButton);
+            configUI.SetPropertyControlValue(PropertyNames.Type, ControlInfoPropertyNames.DisplayName, "Type");
+            PropertyControlInfo typeControlInfo = configUI.FindControlForPropertyName(PropertyNames.Type);
+            typeControlInfo.SetValueDisplayName(Type.Cutout, "Cutout (normal alpha)");
+            typeControlInfo.SetValueDisplayName(Type.Stencil, "Stencil (inverted alpha)");
+
             configUI.SetPropertyControlType(PropertyNames.Color, PropertyControlType.ColorWheel);
             configUI.SetPropertyControlValue(PropertyNames.Color, ControlInfoPropertyNames.DisplayName, "Color");
 
@@ -39,6 +53,8 @@ namespace AssortedPlugins.Stencil
         protected override PropertyCollection OnCreatePropertyCollection()
         {
             List<Property> props = new List<Property>();
+
+            props.Add(StaticListChoiceProperty.CreateForEnum<Type>(PropertyNames.Type, Type.Cutout));
             props.Add(new Int32Property(PropertyNames.Color, (int)(uint)EnvironmentParameters.PrimaryColor));
 
             return new PropertyCollection(props);
@@ -53,6 +69,8 @@ namespace AssortedPlugins.Stencil
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
+
+            type = (Type)newToken.GetProperty<StaticListChoiceProperty>(PropertyNames.Type).Value;
             stencilColor = (ColorBgra)(uint)newToken.GetProperty<Int32Property>(PropertyNames.Color).Value;
         }
 
@@ -72,7 +90,14 @@ namespace AssortedPlugins.Stencil
             {
                 for (int x = rect.Left; x < rect.Right; x++)
                 {
-                    dst[x, y] = stencilColor.NewAlpha(ByteUtil.FastScale(stencilColor.A, (byte)(255 - src[x, y].A)));
+                    byte srcAlpha = src[x, y].A;
+
+                    if (type == Type.Stencil)
+                    {
+                        srcAlpha = (byte)(255 - srcAlpha);
+                    }
+
+                    dst[x, y] = stencilColor.NewAlpha(ByteUtil.FastScale(stencilColor.A, srcAlpha));
                 }
             }
         }

@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 
 // See SharedAssemblyInfo.cs for other attributes
-[assembly: AssemblyTitle("Stencil")]
+[assembly: AssemblyTitle("Cutout / Stencil")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyVersion("0.1")]
 
