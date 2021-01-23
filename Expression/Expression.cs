@@ -14,7 +14,8 @@ namespace AssortedPlugins.Expression
     {
         public enum PropertyNames
         {
-            Program
+            Program,
+            LicenseLink
         }
 
         private string program;
@@ -34,6 +35,14 @@ namespace AssortedPlugins.Expression
             configUI.SetPropertyControlType(PropertyNames.Program, PropertyControlType.TextBox);
             configUI.SetPropertyControlValue(PropertyNames.Program, ControlInfoPropertyNames.DisplayName, "");
             configUI.SetPropertyControlValue(PropertyNames.Program, ControlInfoPropertyNames.Multiline, true);
+            configUI.SetPropertyControlValue(PropertyNames.Program, ControlInfoPropertyNames.Description,
+                "Write 1-4 expressions separated by newlines. Each line corresponds to an output channel depending on the number of lines:\r\n" +
+                "\t\u2022 1 \u2192 RGB\r\n\t\u2022 2 \u2192 RGB, A\r\n\t\u2022 3 \u2192 R, G, B\r\n\t\u2022 4 \u2192 R, G, B, A\r\n\r\n" +
+                "The variables r, g, b, a and x (the current channel) are provided.");
+
+            configUI.SetPropertyControlType(PropertyNames.LicenseLink, PropertyControlType.LinkLabel);
+            configUI.SetPropertyControlValue(PropertyNames.LicenseLink, ControlInfoPropertyNames.DisplayName, "");
+            configUI.SetPropertyControlValue(PropertyNames.LicenseLink, ControlInfoPropertyNames.Description, "Parser license");
 
             return configUI;
         }
@@ -41,7 +50,9 @@ namespace AssortedPlugins.Expression
         protected override PropertyCollection OnCreatePropertyCollection()
         {
             List<Property> props = new List<Property>();
-            props.Add(new StringProperty(PropertyNames.Program, "R\nG\nB\nA\n"));
+
+            props.Add(new StringProperty(PropertyNames.Program, "x"));
+            props.Add(new UriProperty(PropertyNames.LicenseLink, new Uri("https://not.real/")));
 
             return new PropertyCollection(props);
         }
