@@ -7,16 +7,16 @@ using PaintDotNet.Effects;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 
-namespace AssortedPlugins.TileRotate
+namespace AssortedPlugins.MoveSeams
 {
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
-    public class TileRotate : PropertyBasedEffect
+    public class MoveSeams : PropertyBasedEffect
     {
         private Size offset;
 
-        public TileRotate() : base(
-            typeof(TileRotate).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
-            new Bitmap(typeof(TileRotate), "icon.png"),
+        public MoveSeams() : base(
+            typeof(MoveSeams).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
+            new Bitmap(typeof(MoveSeams), "icon.png"),
             SubmenuNames.Distort,
             new EffectOptions() { Flags = EffectFlags.Configurable })
         {
@@ -94,7 +94,7 @@ namespace AssortedPlugins.TileRotate
         protected override void OnCustomizeConfigUIWindowProperties(PropertyCollection props)
         {
             base.OnCustomizeConfigUIWindowProperties(props);
-            props[ControlInfoPropertyNames.WindowTitle].Value = typeof(TileRotate).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
+            props[ControlInfoPropertyNames.WindowTitle].Value = typeof(MoveSeams).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
         }
 
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)
