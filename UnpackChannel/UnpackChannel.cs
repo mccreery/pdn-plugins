@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Reflection;
@@ -12,7 +11,32 @@ namespace AssortedPlugins.UnpackChannel
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
     public class UnpackChannel : PropertyBasedEffect
     {
-        private int exampleProperty;
+        public enum PropertyName
+        {
+            Channel,
+            MaskType,
+            Invert
+        }
+
+        public enum Channel
+        {
+            Red,
+            Green,
+            Blue,
+            Alpha
+        }
+
+        private static readonly int[] rgbaToBgra = { 2, 1, 0, 3 };
+
+        public enum MaskType
+        {
+            Grayscale,
+            Opacity
+        }
+
+        private Channel channel;
+        private MaskType maskType;
+        private bool invert;
 
         public UnpackChannel() : base(
             typeof(UnpackChannel).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
@@ -26,8 +50,14 @@ namespace AssortedPlugins.UnpackChannel
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
-            configUI.SetPropertyControlType(nameof(exampleProperty), PropertyControlType.ColorWheel);
-            configUI.SetPropertyControlValue(nameof(exampleProperty), ControlInfoPropertyNames.DisplayName, "Example Property");
+            configUI.SetPropertyControlType(PropertyName.Channel, PropertyControlType.RadioButton);
+            configUI.SetPropertyControlValue(PropertyName.Channel, ControlInfoPropertyNames.DisplayName, "Channel");
+
+            configUI.SetPropertyControlType(PropertyName.MaskType, PropertyControlType.RadioButton);
+            configUI.SetPropertyControlValue(PropertyName.MaskType, ControlInfoPropertyNames.DisplayName, "Mask Type");
+
+            configUI.SetPropertyControlType(PropertyName.Invert, PropertyControlType.CheckBox);
+            configUI.SetPropertyControlValue(PropertyName.Invert, ControlInfoPropertyNames.DisplayName, "Invert");
 
             return configUI;
         }
@@ -35,7 +65,10 @@ namespace AssortedPlugins.UnpackChannel
         protected override PropertyCollection OnCreatePropertyCollection()
         {
             List<Property> props = new List<Property>();
-            props.Add(new Int32Property(nameof(exampleProperty), (int)(uint)EnvironmentParameters.PrimaryColor));
+
+            props.Add(StaticListChoiceProperty.CreateForEnum(PropertyName.Channel, Channel.Red));
+            props.Add(StaticListChoiceProperty.CreateForEnum(PropertyName.MaskType, MaskType.Grayscale));
+            props.Add(new BooleanProperty(PropertyName.Invert));
 
             return new PropertyCollection(props);
         }
@@ -49,7 +82,10 @@ namespace AssortedPlugins.UnpackChannel
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
-            exampleProperty = newToken.GetProperty<Int32Property>(nameof(exampleProperty)).Value;
+
+            channel = (Channel)newToken.GetProperty<StaticListChoiceProperty>(PropertyName.Channel).Value;
+            maskType = (MaskType)newToken.GetProperty<StaticListChoiceProperty>(PropertyName.MaskType).Value;
+            invert = newToken.GetProperty<BooleanProperty>(PropertyName.Invert).Value;
         }
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
@@ -64,6 +100,25 @@ namespace AssortedPlugins.UnpackChannel
 
         void Render(Surface dst, Surface src, Rectangle rect)
         {
+            int bgraChannel = rgbaToBgra[(int)channel];
+            byte invertMask = invert ? (byte)255 : (byte)0;
+
+            for (int y = rect.Top; y < rect.Bottom; y++)
+            {
+                for (int x = rect.Left; x < rect.Right; x++)
+                {
+                    byte channelValue = (byte)(src[x, y][bgraChannel] ^ invertMask);
+
+                    if (maskType == MaskType.Grayscale)
+                    {
+                        dst[x, y] = ColorBgra.FromBgr(channelValue, channelValue, channelValue);
+                    }
+                    else
+                    {
+                        dst[x, y] = ColorBgra.Black.NewAlpha(channelValue);
+                    }
+                }
+            }
         }
     }
 }
