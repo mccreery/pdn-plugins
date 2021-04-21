@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Reflection;
@@ -12,7 +11,12 @@ namespace AssortedPlugins.CleanTransparent
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
     public class CleanTransparent : PropertyBasedEffect
     {
-        private int exampleProperty;
+        public enum PropertyName
+        {
+            TransparentFillColor
+        }
+
+        private ColorBgra transparentFillColor;
 
         public CleanTransparent() : base(
             typeof(CleanTransparent).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
@@ -26,8 +30,8 @@ namespace AssortedPlugins.CleanTransparent
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
-            configUI.SetPropertyControlType(nameof(exampleProperty), PropertyControlType.ColorWheel);
-            configUI.SetPropertyControlValue(nameof(exampleProperty), ControlInfoPropertyNames.DisplayName, "Example Property");
+            configUI.SetPropertyControlType(PropertyName.TransparentFillColor, PropertyControlType.ColorWheel);
+            configUI.SetPropertyControlValue(PropertyName.TransparentFillColor, ControlInfoPropertyNames.DisplayName, "Transparent Fill Color");
 
             return configUI;
         }
@@ -35,7 +39,8 @@ namespace AssortedPlugins.CleanTransparent
         protected override PropertyCollection OnCreatePropertyCollection()
         {
             List<Property> props = new List<Property>();
-            props.Add(new Int32Property(nameof(exampleProperty), (int)(uint)EnvironmentParameters.PrimaryColor));
+
+            props.Add(new Int32Property(PropertyName.TransparentFillColor, ColorBgra.ToOpaqueInt32(ColorBgra.Black), 0, 0xffffff));
 
             return new PropertyCollection(props);
         }
@@ -49,7 +54,8 @@ namespace AssortedPlugins.CleanTransparent
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
-            exampleProperty = newToken.GetProperty<Int32Property>(nameof(exampleProperty)).Value;
+            transparentFillColor = ColorBgra.FromOpaqueInt32(
+                newToken.GetProperty<Int32Property>(PropertyName.TransparentFillColor).Value).NewAlpha(0);
         }
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
@@ -64,6 +70,22 @@ namespace AssortedPlugins.CleanTransparent
 
         void Render(Surface dst, Surface src, Rectangle rect)
         {
+            for (int y = rect.Top; y < rect.Bottom; y++)
+            {
+                for (int x = rect.Left; x < rect.Right; x++)
+                {
+                    ColorBgra srcColor = src[x, y];
+
+                    if (srcColor.A == 0)
+                    {
+                        dst[x, y] = transparentFillColor;
+                    }
+                    else
+                    {
+                        dst[x, y] = srcColor;
+                    }
+                }
+            }
         }
     }
 }
