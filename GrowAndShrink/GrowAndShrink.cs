@@ -105,12 +105,7 @@ namespace AssortedPlugins.GrowAndShrink
         private BitMask GetMask(Surface src, Rectangle rect, Kernel kernel)
         {
             BitMask mask = new BitMask(rect);
-            Rectangle influence = Rectangle.FromLTRB(
-                rect.Left + kernel.Bounds.Left,
-                rect.Top + kernel.Bounds.Top,
-                rect.Right + kernel.Bounds.Right,
-                rect.Bottom + kernel.Bounds.Bottom);
-
+            Rectangle influence = rect.Add(kernel.Bounds);
             influence.Intersect(src.Bounds);
 
             Point point = new Point();

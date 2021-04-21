@@ -8,6 +8,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{05AD41AA-011F-4441-BEA4-9A96D7F7E56A}"
 	ProjectSection(SolutionItems) = preProject
 		SolutionItems\DefaultPluginInfo.cs = SolutionItems\DefaultPluginInfo.cs
+		SolutionItems\RectangleExtensions.cs = SolutionItems\RectangleExtensions.cs
 		SolutionItems\SharedAssemblyInfo.cs = SolutionItems\SharedAssemblyInfo.cs
 	EndProjectSection
 EndProject
