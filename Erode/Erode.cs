@@ -6,20 +6,23 @@ using PaintDotNet;
 using PaintDotNet.Effects;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
-using static PaintDotNet.UserBlendOps;
 
 namespace AssortedPlugins
 {
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
     public class Erode : PropertyBasedEffect
     {
+        public enum PropertyName
+        {
+            Radius
+        }
+
         private int radius;
-        private ColorBgra outlineColor;
 
         public Erode() : base(
                 typeof(Erode).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
                 new Bitmap(typeof(Erode), "icon.png"),
-                SubmenuNames.Distort,
+                "Object",
                 new EffectOptions() { Flags = EffectFlags.Configurable })
         {
         }
@@ -28,11 +31,8 @@ namespace AssortedPlugins
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
-            configUI.SetPropertyControlType(nameof(radius), PropertyControlType.Slider);
-            configUI.SetPropertyControlValue(nameof(radius), ControlInfoPropertyNames.DisplayName, "Radius");
-
-            configUI.SetPropertyControlType(nameof(outlineColor), PropertyControlType.ColorWheel);
-            configUI.SetPropertyControlValue(nameof(outlineColor), ControlInfoPropertyNames.DisplayName, "Color");
+            configUI.SetPropertyControlType(PropertyName.Radius, PropertyControlType.Slider);
+            configUI.SetPropertyControlValue(PropertyName.Radius, ControlInfoPropertyNames.DisplayName, "Radius");
 
             return configUI;
         }
@@ -42,8 +42,7 @@ namespace AssortedPlugins
             List<Property> props = new List<Property>();
             ColorBgra primaryColor = EnvironmentParameters.PrimaryColor;
 
-            props.Add(new Int32Property(nameof(radius), 0, -50, 50));
-            props.Add(new Int32Property(nameof(outlineColor), (int)(uint)EnvironmentParameters.PrimaryColor));
+            props.Add(new Int32Property(PropertyName.Radius, 5, 0, 50));
 
             return new PropertyCollection(props);
         }
@@ -60,8 +59,7 @@ namespace AssortedPlugins
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
 
-            radius = newToken.GetProperty<Int32Property>(nameof(radius)).Value;
-            outlineColor = ColorBgra.FromUInt32((uint)newToken.GetProperty<Int32Property>(nameof(outlineColor)).Value);
+            radius = newToken.GetProperty<Int32Property>(PropertyName.Radius).Value;
         }
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
@@ -90,10 +88,8 @@ namespace AssortedPlugins
                 if (marked)
                 {
                     ColorBgra dstColor = src[point];
-                    dstColor = NormalBlendOp.ApplyStatic(outlineColor, dstColor);
-
-                    byte alpha = kernel.ExtremeAlpha(src, point, radius < 0);
-                    dst[point] = dstColor.NewAlpha((byte)(dstColor.A * alpha / 255));
+                    byte alpha = kernel.ExtremeAlpha(src, point, true);
+                    dst[point] = dstColor.NewAlpha(ByteUtil.FastScale(dstColor.A, alpha));
                 }
                 else
                 {
