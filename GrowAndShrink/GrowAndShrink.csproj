@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -55,8 +55,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\SolutionItems\BitMask.cs">
+      <Link>BitMask.cs</Link>
+    </Compile>
     <Compile Include="..\SolutionItems\DefaultPluginInfo.cs">
       <Link>DefaultPluginInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\SolutionItems\Kernel.cs">
+      <Link>Kernel.cs</Link>
     </Compile>
     <Compile Include="..\SolutionItems\RectangleExtensions.cs">
       <Link>RectangleExtensions.cs</Link>
@@ -64,8 +70,6 @@
     <Compile Include="..\SolutionItems\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="BitMask.cs" />
-    <Compile Include="Kernel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="GrowAndShrink.cs" />
   </ItemGroup>
