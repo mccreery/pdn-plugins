@@ -42,7 +42,7 @@ namespace AssortedPlugins
             List<Property> props = new List<Property>();
             ColorBgra primaryColor = EnvironmentParameters.PrimaryColor;
 
-            props.Add(new Int32Property(nameof(radius), 0, -50, 50));
+            props.Add(new Int32Property(nameof(radius), 0, 0, 50));
             props.Add(new Int32Property(nameof(outlineColor), (int)(uint)EnvironmentParameters.PrimaryColor));
 
             return new PropertyCollection(props);
@@ -92,8 +92,8 @@ namespace AssortedPlugins
                     ColorBgra dstColor = src[point];
                     dstColor = NormalBlendOp.ApplyStatic(outlineColor, dstColor);
 
-                    byte alpha = kernel.ExtremeAlpha(src, point, radius < 0);
-                    dst[point] = dstColor.NewAlpha((byte)(dstColor.A * alpha / 255));
+                    byte alpha = kernel.ExtremeAlpha(src, point, false);
+                    dst[point] = dstColor.NewAlpha(ByteUtil.FastScale(dstColor.A, alpha));
                 }
                 else
                 {

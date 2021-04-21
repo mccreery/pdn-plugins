@@ -75,7 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="icon.png" />
-    <EmbeddedResource Include="GrowAndShrink.sample.png" />
+    <EmbeddedResource Include="Outline.sample.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
