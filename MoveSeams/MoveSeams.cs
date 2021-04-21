@@ -12,6 +12,20 @@ namespace AssortedPlugins.MoveSeams
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
     public class MoveSeams : PropertyBasedEffect
     {
+        public enum PropertyName
+        {
+            OffsetMode,
+            AbsoluteOffsetX,
+            AbsoluteOffsetY,
+            RelativeOffset
+        }
+
+        public enum OffsetMode
+        {
+            Relative,
+            Absolute
+        }
+
         private Size offset;
 
         public MoveSeams() : base(
@@ -26,31 +40,31 @@ namespace AssortedPlugins.MoveSeams
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
-            configUI.SetPropertyControlValue("mode", ControlInfoPropertyNames.DisplayName, "Mode");
-            configUI.SetPropertyControlType("mode", PropertyControlType.RadioButton);
+            configUI.SetPropertyControlValue(PropertyName.OffsetMode, ControlInfoPropertyNames.DisplayName, "Mode");
+            configUI.SetPropertyControlType(PropertyName.OffsetMode, PropertyControlType.RadioButton);
 
-            PropertyControlInfo modeControl = configUI.FindControlForPropertyName("mode");
+            PropertyControlInfo modeControl = configUI.FindControlForPropertyName(PropertyName.OffsetMode);
             modeControl.SetValueDisplayName(OffsetMode.Relative, "Relative");
             modeControl.SetValueDisplayName(OffsetMode.Absolute, "Absolute");
 
-            configUI.SetPropertyControlType("pan", PropertyControlType.PanAndSlider);
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.DisplayName, "Relative Offset");
+            configUI.SetPropertyControlType(PropertyName.RelativeOffset, PropertyControlType.PanAndSlider);
+            configUI.SetPropertyControlValue(PropertyName.RelativeOffset, ControlInfoPropertyNames.DisplayName, "Relative Offset");
 
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.SliderSmallChangeX, 0.05);
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.SliderLargeChangeX, 0.25);
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.UpDownIncrementX, 0.01);
+            configUI.SetPropertyControlValue(PropertyName.RelativeOffset, ControlInfoPropertyNames.SliderSmallChangeX, 0.05);
+            configUI.SetPropertyControlValue(PropertyName.RelativeOffset, ControlInfoPropertyNames.SliderLargeChangeX, 0.25);
+            configUI.SetPropertyControlValue(PropertyName.RelativeOffset, ControlInfoPropertyNames.UpDownIncrementX, 0.01);
 
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.SliderSmallChangeY, 0.05);
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.SliderLargeChangeY, 0.25);
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.UpDownIncrementY, 0.01);
+            configUI.SetPropertyControlValue(PropertyName.RelativeOffset, ControlInfoPropertyNames.SliderSmallChangeY, 0.05);
+            configUI.SetPropertyControlValue(PropertyName.RelativeOffset, ControlInfoPropertyNames.SliderLargeChangeY, 0.25);
+            configUI.SetPropertyControlValue(PropertyName.RelativeOffset, ControlInfoPropertyNames.UpDownIncrementY, 0.01);
 
             ImageResource underlay = ImageResource.FromImage(EnvironmentParameters.SourceSurface.CreateAliasedBitmap(EnvironmentParameters.SelectionBounds));
-            configUI.SetPropertyControlValue("pan", ControlInfoPropertyNames.StaticImageUnderlay, GetTiledUnderlay());
+            configUI.SetPropertyControlValue(PropertyName.RelativeOffset, ControlInfoPropertyNames.StaticImageUnderlay, GetTiledUnderlay());
 
-            configUI.SetPropertyControlType("offsetX", PropertyControlType.Slider);
-            configUI.SetPropertyControlValue("offsetX", ControlInfoPropertyNames.DisplayName, "Absolute X Offset");
-            configUI.SetPropertyControlType("offsetY", PropertyControlType.Slider);
-            configUI.SetPropertyControlValue("offsetY", ControlInfoPropertyNames.DisplayName, "Absolute Y Offset");
+            configUI.SetPropertyControlType(PropertyName.AbsoluteOffsetX, PropertyControlType.Slider);
+            configUI.SetPropertyControlValue(PropertyName.AbsoluteOffsetX, ControlInfoPropertyNames.DisplayName, "Absolute X Offset");
+            configUI.SetPropertyControlType(PropertyName.AbsoluteOffsetY, PropertyControlType.Slider);
+            configUI.SetPropertyControlValue(PropertyName.AbsoluteOffsetY, ControlInfoPropertyNames.DisplayName, "Absolute Y Offset");
 
             return configUI;
         }
@@ -75,18 +89,18 @@ namespace AssortedPlugins.MoveSeams
         {
             List<Property> props = new List<Property>();
 
-            props.Add(StaticListChoiceProperty.CreateForEnum<OffsetMode>("mode", OffsetMode.Relative, false));
-            props.Add(new DoubleVectorProperty("pan", Pair.Create(0.5, 0.5), Pair.Create(-1.0, -1.0), Pair.Create(1.0, 1.0)));
+            props.Add(StaticListChoiceProperty.CreateForEnum<OffsetMode>(PropertyName.OffsetMode, OffsetMode.Relative, false));
+            props.Add(new DoubleVectorProperty(PropertyName.RelativeOffset, Pair.Create(0.5, 0.5), Pair.Create(-1.0, -1.0), Pair.Create(1.0, 1.0)));
 
             Rectangle bounds = EnvironmentParameters.SelectionBounds;
-            props.Add(new Int32Property("offsetX", (int)Math.Round(bounds.Width / 2.0), -bounds.Width, bounds.Width));
-            props.Add(new Int32Property("offsetY", (int)Math.Round(bounds.Height / 2.0), -bounds.Height, bounds.Height));
+            props.Add(new Int32Property(PropertyName.AbsoluteOffsetX, (int)Math.Round(bounds.Width / 2.0), -bounds.Width, bounds.Width));
+            props.Add(new Int32Property(PropertyName.AbsoluteOffsetY, (int)Math.Round(bounds.Height / 2.0), -bounds.Height, bounds.Height));
 
             List<PropertyCollectionRule> rules = new List<PropertyCollectionRule>();
 
-            rules.Add(new ReadOnlyBoundToValueRule<object, StaticListChoiceProperty>("pan", "mode", OffsetMode.Relative, true));
-            rules.Add(new ReadOnlyBoundToValueRule<object, StaticListChoiceProperty>("offsetX", "mode", OffsetMode.Absolute, true));
-            rules.Add(new ReadOnlyBoundToValueRule<object, StaticListChoiceProperty>("offsetY", "mode", OffsetMode.Absolute, true));
+            rules.Add(new ReadOnlyBoundToValueRule<object, StaticListChoiceProperty>(PropertyName.RelativeOffset, PropertyName.OffsetMode, OffsetMode.Relative, true));
+            rules.Add(new ReadOnlyBoundToValueRule<object, StaticListChoiceProperty>(PropertyName.AbsoluteOffsetX, PropertyName.OffsetMode, OffsetMode.Absolute, true));
+            rules.Add(new ReadOnlyBoundToValueRule<object, StaticListChoiceProperty>(PropertyName.AbsoluteOffsetY, PropertyName.OffsetMode, OffsetMode.Absolute, true));
 
             return new PropertyCollection(props, rules);
         }
@@ -102,9 +116,9 @@ namespace AssortedPlugins.MoveSeams
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
             Rectangle bounds = EnvironmentParameters.SelectionBounds;
 
-            if ((OffsetMode)newToken.GetProperty<StaticListChoiceProperty>("mode").Value == OffsetMode.Relative)
+            if ((OffsetMode)newToken.GetProperty<StaticListChoiceProperty>(PropertyName.OffsetMode).Value == OffsetMode.Relative)
             {
-                Pair<double, double> offsetD = newToken.GetProperty<DoubleVectorProperty>("pan").Value;
+                Pair<double, double> offsetD = newToken.GetProperty<DoubleVectorProperty>(PropertyName.RelativeOffset).Value;
                 offset = new Size(
                     (int)Math.Round(bounds.Width * offsetD.First),
                     (int)Math.Round(bounds.Height * offsetD.Second));
@@ -112,8 +126,8 @@ namespace AssortedPlugins.MoveSeams
             else
             {
                 offset = new Size(
-                    newToken.GetProperty<Int32Property>("offsetX").Value,
-                    newToken.GetProperty<Int32Property>("offsetY").Value);
+                    newToken.GetProperty<Int32Property>(PropertyName.AbsoluteOffsetX).Value,
+                    newToken.GetProperty<Int32Property>(PropertyName.AbsoluteOffsetY).Value);
             }
 
             offset.Width = FloorMod(offset.Width, bounds.Width);
@@ -167,11 +181,5 @@ namespace AssortedPlugins.MoveSeams
         {
             return ((a % b) + b) % b;
         }
-    }
-
-    public enum OffsetMode
-    {
-        Relative,
-        Absolute
     }
 }
