@@ -3,6 +3,6 @@
 // See SharedAssemblyInfo.cs for other attributes
 [assembly: AssemblyTitle("$projectname$")]
 [assembly: AssemblyDescription("")]
-[assembly: AssemblyVersion("0.1")]
+[assembly: AssemblyVersion("1.0")]
 
 [assembly: AssemblyConfiguration("tag 1|tag 2")]
