@@ -87,17 +87,17 @@ namespace AssortedPlugins
 
             foreach ((Point point, bool marked) in mask)
             {
-                if (marked)
-                {
-                    ColorBgra dstColor = src[point];
-                    dstColor = NormalBlendOp.ApplyStatic(outlineColor, dstColor);
+                ColorBgra srcColor = src[point];
 
+                if (marked && srcColor.A < 255)
+                {
+                    srcColor = NormalBlendOp.ApplyStatic(outlineColor, srcColor);
                     byte alpha = kernel.ExtremeAlpha(src, point, false);
-                    dst[point] = dstColor.NewAlpha(ByteUtil.FastScale(dstColor.A, alpha));
+                    dst[point] = srcColor.NewAlpha(ByteUtil.FastScale(srcColor.A, alpha));
                 }
                 else
                 {
-                    dst[point] = src[point];
+                    dst[point] = srcColor;
                 }
             }
         }
@@ -114,7 +114,7 @@ namespace AssortedPlugins
                 for (point.X = influence.Left; point.X < influence.Right; point.X++)
                 {
                     byte a = src[point].A;
-                    if (a != 0 && a != 255)
+                    if (a > 0)
                     {
                         Rectangle markedRect = kernel.Bounds;
                         markedRect.Offset(point);
