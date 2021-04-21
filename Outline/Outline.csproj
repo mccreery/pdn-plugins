@@ -7,8 +7,8 @@
     <ProjectGuid>{FF34255E-FAD2-44DB-ADFF-0976CF83CDE1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AssortedPlugins.GrowAndShrink</RootNamespace>
-    <AssemblyName>GrowAndShrink</AssemblyName>
+    <RootNamespace>AssortedPlugins</RootNamespace>
+    <AssemblyName>Outline</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -71,7 +71,7 @@
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="GrowAndShrink.cs" />
+    <Compile Include="Outline.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="icon.png" />

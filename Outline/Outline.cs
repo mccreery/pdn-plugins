@@ -8,19 +8,19 @@ using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using static PaintDotNet.UserBlendOps;
 
-namespace AssortedPlugins.GrowAndShrink
+namespace AssortedPlugins
 {
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
-    public class GrowAndShrink : PropertyBasedEffect
+    public class Outline : PropertyBasedEffect
     {
         private int radius;
         private ColorBgra outlineColor;
 
-        public GrowAndShrink() : base(
-                typeof(GrowAndShrink).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
-                new Bitmap(typeof(GrowAndShrink), "icon.png"),
-                SubmenuNames.Distort,
-                new EffectOptions() { Flags = EffectFlags.Configurable })
+        public Outline() : base(
+            typeof(Outline).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
+            new Bitmap(typeof(Outline), "icon.png"),
+            "Object",
+            new EffectOptions() { Flags = EffectFlags.Configurable })
         {
         }
 
@@ -53,7 +53,7 @@ namespace AssortedPlugins.GrowAndShrink
             base.OnCustomizeConfigUIWindowProperties(props);
 
             props[ControlInfoPropertyNames.WindowTitle].Value =
-                typeof(GrowAndShrink).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
+                typeof(Outline).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
         }
 
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)
