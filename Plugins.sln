@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stencil", "Stencil\Stencil.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorRamp", "ColorRamp\ColorRamp.csproj", "{0035FB8B-FBDA-49DF-ABD5-5A4BA6FCD92A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnpackChannel", "UnpackChannel\UnpackChannel.csproj", "{4D5B2D80-F9E9-4626-AF7C-DE7826A4FC5B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{0035FB8B-FBDA-49DF-ABD5-5A4BA6FCD92A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0035FB8B-FBDA-49DF-ABD5-5A4BA6FCD92A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0035FB8B-FBDA-49DF-ABD5-5A4BA6FCD92A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D5B2D80-F9E9-4626-AF7C-DE7826A4FC5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D5B2D80-F9E9-4626-AF7C-DE7826A4FC5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D5B2D80-F9E9-4626-AF7C-DE7826A4FC5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D5B2D80-F9E9-4626-AF7C-DE7826A4FC5B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
