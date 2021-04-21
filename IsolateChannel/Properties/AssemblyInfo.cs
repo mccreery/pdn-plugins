@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 
 // See SharedAssemblyInfo.cs for other attributes
-[assembly: AssemblyTitle("Unpack Channel")]
+[assembly: AssemblyTitle("Isolate Channel")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyVersion("0.1")]
 

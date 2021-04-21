@@ -21,7 +21,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stencil", "Stencil\Stencil.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorRamp", "ColorRamp\ColorRamp.csproj", "{0035FB8B-FBDA-49DF-ABD5-5A4BA6FCD92A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnpackChannel", "UnpackChannel\UnpackChannel.csproj", "{4D5B2D80-F9E9-4626-AF7C-DE7826A4FC5B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IsolateChannel", "IsolateChannel\IsolateChannel.csproj", "{4D5B2D80-F9E9-4626-AF7C-DE7826A4FC5B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
