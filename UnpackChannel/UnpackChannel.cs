@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Reflection;
@@ -13,12 +14,12 @@ namespace AssortedPlugins.UnpackChannel
     {
         public enum PropertyName
         {
-            Channel,
-            MaskType,
+            InputChannel,
+            OutputChannels,
             Invert
         }
 
-        public enum Channel
+        public enum InputChannel
         {
             Red,
             Green,
@@ -26,16 +27,42 @@ namespace AssortedPlugins.UnpackChannel
             Alpha
         }
 
-        private static readonly int[] rgbaToBgra = { 2, 1, 0, 3 };
-
-        public enum MaskType
+        public static int GetBgraChannel(InputChannel inputChannel)
         {
-            Grayscale,
-            Opacity
+            switch (inputChannel)
+            {
+                case InputChannel.Red: return 2;
+                case InputChannel.Green: return 1;
+                case InputChannel.Blue: return 0;
+                case InputChannel.Alpha: return 3;
+                default: throw new ArgumentException("Invalid input channel");
+            }
         }
 
-        private Channel channel;
-        private MaskType maskType;
+        public enum OutputChannels
+        {
+            Grayscale,
+            Red,
+            Green,
+            Blue,
+            Alpha
+        }
+
+        public static uint GetBgraMask(OutputChannels outputChannels)
+        {
+            switch (outputChannels)
+            {
+                case OutputChannels.Grayscale: return (uint)ColorBgra.FromBgra(255, 255, 255, 0);
+                case OutputChannels.Red: return (uint)ColorBgra.FromBgra(0, 0, 255, 0);
+                case OutputChannels.Green: return (uint)ColorBgra.FromBgra(0, 255, 0, 0);
+                case OutputChannels.Blue: return (uint)ColorBgra.FromBgra(255, 0, 0, 0);
+                case OutputChannels.Alpha: return (uint)ColorBgra.FromBgra(0, 0, 0, 255);
+                default: throw new ArgumentException("Invalid output channel");
+            }
+        }
+
+        private InputChannel inputChannel;
+        private OutputChannels outputChannels;
         private bool invert;
 
         public UnpackChannel() : base(
@@ -50,11 +77,11 @@ namespace AssortedPlugins.UnpackChannel
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
-            configUI.SetPropertyControlType(PropertyName.Channel, PropertyControlType.RadioButton);
-            configUI.SetPropertyControlValue(PropertyName.Channel, ControlInfoPropertyNames.DisplayName, "Channel");
+            configUI.SetPropertyControlType(PropertyName.InputChannel, PropertyControlType.RadioButton);
+            configUI.SetPropertyControlValue(PropertyName.InputChannel, ControlInfoPropertyNames.DisplayName, "Input Channel");
 
-            configUI.SetPropertyControlType(PropertyName.MaskType, PropertyControlType.RadioButton);
-            configUI.SetPropertyControlValue(PropertyName.MaskType, ControlInfoPropertyNames.DisplayName, "Mask Type");
+            configUI.SetPropertyControlType(PropertyName.OutputChannels, PropertyControlType.RadioButton);
+            configUI.SetPropertyControlValue(PropertyName.OutputChannels, ControlInfoPropertyNames.DisplayName, "Output Channels");
 
             configUI.SetPropertyControlType(PropertyName.Invert, PropertyControlType.CheckBox);
             configUI.SetPropertyControlValue(PropertyName.Invert, ControlInfoPropertyNames.DisplayName, "");
@@ -67,8 +94,8 @@ namespace AssortedPlugins.UnpackChannel
         {
             List<Property> props = new List<Property>();
 
-            props.Add(StaticListChoiceProperty.CreateForEnum(PropertyName.Channel, Channel.Red));
-            props.Add(StaticListChoiceProperty.CreateForEnum(PropertyName.MaskType, MaskType.Grayscale));
+            props.Add(StaticListChoiceProperty.CreateForEnum(PropertyName.InputChannel, InputChannel.Red));
+            props.Add(StaticListChoiceProperty.CreateForEnum(PropertyName.OutputChannels, OutputChannels.Grayscale));
             props.Add(new BooleanProperty(PropertyName.Invert));
 
             return new PropertyCollection(props);
@@ -84,8 +111,8 @@ namespace AssortedPlugins.UnpackChannel
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
 
-            channel = (Channel)newToken.GetProperty<StaticListChoiceProperty>(PropertyName.Channel).Value;
-            maskType = (MaskType)newToken.GetProperty<StaticListChoiceProperty>(PropertyName.MaskType).Value;
+            inputChannel = (InputChannel)newToken.GetProperty<StaticListChoiceProperty>(PropertyName.InputChannel).Value;
+            outputChannels = (OutputChannels)newToken.GetProperty<StaticListChoiceProperty>(PropertyName.OutputChannels).Value;
             invert = newToken.GetProperty<BooleanProperty>(PropertyName.Invert).Value;
         }
 
@@ -101,25 +128,26 @@ namespace AssortedPlugins.UnpackChannel
 
         void Render(Surface dst, Surface src, Rectangle rect)
         {
-            int bgraChannel = rgbaToBgra[(int)channel];
-            byte invertMask = invert ? (byte)255 : (byte)0;
+            int bgraChannel = GetBgraChannel(inputChannel);
+            uint bgraMask = GetBgraMask(outputChannels);
+            uint alphaMask = ~bgraMask & (uint)ColorBgra.FromBgra(0, 0, 0, 255);
+            byte invertMask = invert ? (byte)0xff : (byte)0;
 
             for (int y = rect.Top; y < rect.Bottom; y++)
             {
                 for (int x = rect.Left; x < rect.Right; x++)
                 {
-                    byte channelValue = (byte)(src[x, y][bgraChannel] ^ invertMask);
+                    byte value = (byte)(src[x, y][bgraChannel] ^ invertMask);
+                    uint allValue = AllComponents(value);
 
-                    if (maskType == MaskType.Grayscale)
-                    {
-                        dst[x, y] = ColorBgra.FromBgr(channelValue, channelValue, channelValue);
-                    }
-                    else
-                    {
-                        dst[x, y] = ColorBgra.Black.NewAlpha(channelValue);
-                    }
+                    dst[x, y] = (ColorBgra)(allValue & bgraMask | alphaMask);
                 }
             }
+        }
+
+        private static uint AllComponents(byte component)
+        {
+            return (uint)(component | component << 8 | component << 16 | component << 24);
         }
     }
 }
