@@ -3,11 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrowAndShrink", "GrowAndShrink\GrowAndShrink.csproj", "{FF34255E-FAD2-44DB-ADFF-0976CF83CDE1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Outline", "Outline\Outline.csproj", "{FF34255E-FAD2-44DB-ADFF-0976CF83CDE1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{05AD41AA-011F-4441-BEA4-9A96D7F7E56A}"
 	ProjectSection(SolutionItems) = preProject
+		SolutionItems\BitMask.cs = SolutionItems\BitMask.cs
 		SolutionItems\DefaultPluginInfo.cs = SolutionItems\DefaultPluginInfo.cs
+		SolutionItems\Kernel.cs = SolutionItems\Kernel.cs
+		SolutionItems\RectangleExtensions.cs = SolutionItems\RectangleExtensions.cs
 		SolutionItems\SharedAssemblyInfo.cs = SolutionItems\SharedAssemblyInfo.cs
 	EndProjectSection
 EndProject
@@ -20,6 +23,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleanTransparent", "CleanTransparent\CleanTransparent.csproj", "{01DE34FD-CC1F-493C-9DE3-C860DA5F4C6D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoveTransparency", "RemoveTransparency\RemoveTransparency.csproj", "{07F2D84F-9E8B-4316-BA12-2EEFEADA069C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Erode", "Erode\Erode.csproj", "{112103D1-1B31-475D-8C56-511FD6F0A4E6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +56,10 @@ Global
 		{07F2D84F-9E8B-4316-BA12-2EEFEADA069C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07F2D84F-9E8B-4316-BA12-2EEFEADA069C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{07F2D84F-9E8B-4316-BA12-2EEFEADA069C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{112103D1-1B31-475D-8C56-511FD6F0A4E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{112103D1-1B31-475D-8C56-511FD6F0A4E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{112103D1-1B31-475D-8C56-511FD6F0A4E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{112103D1-1B31-475D-8C56-511FD6F0A4E6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

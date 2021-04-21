@@ -2,7 +2,7 @@
 
 // See SharedAssemblyInfo.cs for other attributes
 [assembly: AssemblyTitle("Isolate Channel")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Extracts a single color channel from a texture to grayscale or another channel.")]
 [assembly: AssemblyVersion("0.1")]
 
-[assembly: AssemblyConfiguration("tag 1|tag 2")]
+[assembly: AssemblyConfiguration("channel|texture|alpha")]

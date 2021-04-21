@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Reflection;
 using PaintDotNet;
 using PaintDotNet.Effects;
@@ -9,19 +8,19 @@ using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 using static PaintDotNet.UserBlendOps;
 
-namespace AssortedPlugins.GrowAndShrink
+namespace AssortedPlugins
 {
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
-    public class GrowAndShrink : PropertyBasedEffect
+    public class Outline : PropertyBasedEffect
     {
         private int radius;
         private ColorBgra outlineColor;
 
-        public GrowAndShrink() : base(
-                typeof(GrowAndShrink).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
-                new Bitmap(typeof(GrowAndShrink), "icon.png"),
-                SubmenuNames.Distort,
-                new EffectOptions() { Flags = EffectFlags.Configurable })
+        public Outline() : base(
+            typeof(Outline).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
+            new Bitmap(typeof(Outline), "icon.png"),
+            "Object",
+            new EffectOptions() { Flags = EffectFlags.Configurable })
         {
         }
 
@@ -43,7 +42,7 @@ namespace AssortedPlugins.GrowAndShrink
             List<Property> props = new List<Property>();
             ColorBgra primaryColor = EnvironmentParameters.PrimaryColor;
 
-            props.Add(new Int32Property(nameof(radius), 0, -50, 50));
+            props.Add(new Int32Property(nameof(radius), 0, 0, 50));
             props.Add(new Int32Property(nameof(outlineColor), (int)(uint)EnvironmentParameters.PrimaryColor));
 
             return new PropertyCollection(props);
@@ -54,7 +53,7 @@ namespace AssortedPlugins.GrowAndShrink
             base.OnCustomizeConfigUIWindowProperties(props);
 
             props[ControlInfoPropertyNames.WindowTitle].Value =
-                typeof(GrowAndShrink).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
+                typeof(Outline).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
         }
 
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)
@@ -67,7 +66,7 @@ namespace AssortedPlugins.GrowAndShrink
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
         {
-            Kernel kernel = GetKernel();
+            Kernel kernel = Kernel.CreateCircle(Math.Abs(radius));
             int endIndex = startIndex + length;
 
             for(int i = startIndex; i < endIndex; i++)
@@ -88,17 +87,22 @@ namespace AssortedPlugins.GrowAndShrink
 
             foreach ((Point point, bool marked) in mask)
             {
-                if (marked)
+                if (IsCancelRequested)
                 {
-                    ColorBgra dstColor = src[point];
-                    dstColor = NormalBlendOp.ApplyStatic(outlineColor, dstColor);
+                    break;
+                }
 
-                    byte alpha = kernel.ExtremeAlpha(src, point, radius < 0);
-                    dst[point] = dstColor.NewAlpha((byte)(dstColor.A * alpha / 255));
+                ColorBgra srcColor = src[point];
+
+                if (marked && srcColor.A < 255)
+                {
+                    srcColor = NormalBlendOp.ApplyStatic(outlineColor, srcColor);
+                    byte alpha = kernel.ExtremeAlpha(src, point, false);
+                    dst[point] = srcColor.NewAlpha(ByteUtil.FastScale(srcColor.A, alpha));
                 }
                 else
                 {
-                    dst[point] = src[point];
+                    dst[point] = srcColor;
                 }
             }
         }
@@ -106,7 +110,7 @@ namespace AssortedPlugins.GrowAndShrink
         private BitMask GetMask(Surface src, Rectangle rect, Kernel kernel)
         {
             BitMask mask = new BitMask(rect);
-            Rectangle influence = rect.Inflate(kernel.Bounds);
+            Rectangle influence = rect.Add(kernel.Bounds);
             influence.Intersect(src.Bounds);
 
             Point point = new Point();
@@ -115,7 +119,7 @@ namespace AssortedPlugins.GrowAndShrink
                 for (point.X = influence.Left; point.X < influence.Right; point.X++)
                 {
                     byte a = src[point].A;
-                    if (a != 0 && a != 255)
+                    if (a > 0)
                     {
                         Rectangle markedRect = kernel.Bounds;
                         markedRect.Offset(point);
@@ -124,18 +128,6 @@ namespace AssortedPlugins.GrowAndShrink
                 }
             }
             return mask;
-        }
-
-        private Kernel GetKernel()
-        {
-            int size = Math.Abs(radius)*2 + 1;
-
-            Bitmap bitmap = new Bitmap(size, size);
-            Graphics g = Graphics.FromImage(bitmap);
-
-            g.PixelOffsetMode = PixelOffsetMode.Half;
-            g.FillEllipse(Brushes.Black, 0, 0, bitmap.Width, bitmap.Height);
-            return new Kernel(bitmap);
         }
     }
 

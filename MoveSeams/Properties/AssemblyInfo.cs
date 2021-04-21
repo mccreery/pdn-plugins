@@ -2,7 +2,7 @@
 
 // See SharedAssemblyInfo.cs for other attributes
 [assembly: AssemblyTitle("Move Seams")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Draws a tiled version of the canvas at an offset, allowing seamless texture creation and positioning.")]
 [assembly: AssemblyVersion("0.1")]
 
-[assembly: AssemblyConfiguration("tag 1|tag 2")]
+[assembly: AssemblyConfiguration("seam|seamless|texture")]
