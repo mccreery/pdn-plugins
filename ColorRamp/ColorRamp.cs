@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Reflection;
 using PaintDotNet;
 using PaintDotNet.Effects;
@@ -24,8 +25,19 @@ namespace AssortedPlugins.ColorRamp
             IgnoreTransparentPixels
         }
 
-        private int[] stopPositions = new int[3];
-        private ColorBgra[] stopColors = new ColorBgra[3];
+        private struct Stop
+        {
+            public Stop(int position, ColorBgra color)
+            {
+                Position = position;
+                Color = color;
+            }
+
+            public int Position { get; }
+            public ColorBgra Color { get; }
+        }
+
+        private Stop[] stops = new Stop[3];
         private bool ignoreTransparentPixels;
 
         public ColorRamp() : base(
@@ -90,14 +102,17 @@ namespace AssortedPlugins.ColorRamp
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
 
-            stopPositions[0] = newToken.GetProperty<Int32Property>(PropertyName.Stop1).Value;
-            stopColors[0] = ColorBgra.FromUInt32((uint)newToken.GetProperty<Int32Property>(PropertyName.Stop1Color).Value);
+            stops[0] = new Stop(
+                newToken.GetProperty<Int32Property>(PropertyName.Stop1).Value,
+                ColorBgra.FromUInt32((uint)newToken.GetProperty<Int32Property>(PropertyName.Stop1Color).Value));
 
-            stopPositions[1] = newToken.GetProperty<Int32Property>(PropertyName.Stop2).Value;
-            stopColors[1] = ColorBgra.FromUInt32((uint)newToken.GetProperty<Int32Property>(PropertyName.Stop2Color).Value);
+            stops[1] = new Stop(
+                newToken.GetProperty<Int32Property>(PropertyName.Stop2).Value,
+                ColorBgra.FromUInt32((uint)newToken.GetProperty<Int32Property>(PropertyName.Stop2Color).Value));
 
-            stopPositions[2] = newToken.GetProperty<Int32Property>(PropertyName.Stop3).Value;
-            stopColors[2] = ColorBgra.FromUInt32((uint)newToken.GetProperty<Int32Property>(PropertyName.Stop3Color).Value);
+            stops[2] = new Stop(
+                newToken.GetProperty<Int32Property>(PropertyName.Stop3).Value,
+                ColorBgra.FromUInt32((uint)newToken.GetProperty<Int32Property>(PropertyName.Stop3Color).Value));
 
             ignoreTransparentPixels = newToken.GetProperty<BooleanProperty>(PropertyName.IgnoreTransparentPixels).Value;
         }
@@ -114,6 +129,21 @@ namespace AssortedPlugins.ColorRamp
 
         void Render(Surface dst, Surface src, Rectangle rect)
         {
+            List<Stop> orderedStops = GetStops();
+            ColorBgra[] lut = new ColorBgra[256];
+
+            for (int stopIndex = 0; stopIndex < orderedStops.Count - 1; stopIndex++)
+            {
+                Stop startStop = orderedStops[stopIndex];
+                Stop endStop = orderedStops[stopIndex + 1];
+
+                for (int x = startStop.Position; x <= endStop.Position; x++)
+                {
+                    float t = InverseLerp(startStop.Position, endStop.Position, x);
+                    lut[x] = Lerp(startStop.Color, endStop.Color, t);
+                }
+            }
+
             for (int y = rect.Top; y < rect.Bottom; y++)
             {
                 for (int x = rect.Left; x < rect.Right; x++)
@@ -123,23 +153,33 @@ namespace AssortedPlugins.ColorRamp
                     if (ignoreTransparentPixels && srcColor.A == 0)
                     {
                         dst[x, y] = srcColor;
-                        continue;
-                    }
-
-                    int brightness = (int)Math.Round((srcColor.R + srcColor.G + srcColor.B) / 3.0);
-
-                    if (brightness > stopPositions[1])
-                    {
-                        float t = InverseLerp(stopPositions[1], stopPositions[2], brightness);
-                        dst[x, y] = Lerp(stopColors[1], stopColors[2], t);
                     }
                     else
                     {
-                        float t = InverseLerp(stopPositions[0], stopPositions[1], brightness);
-                        dst[x, y] = Lerp(stopColors[0], stopColors[1], t);
+                        int brightness = (int)Math.Round((srcColor.R + srcColor.G + srcColor.B) / 3.0);
+                        dst[x, y] = lut[brightness];
                     }
                 }
             }
+        }
+
+        private List<Stop> GetStops()
+        {
+            List<Stop> orderedStops = stops
+                .OrderBy(stop => stop.Position)
+                .GroupBy(stop => stop.Position)
+                .Select(g => g.First())
+                .ToList();
+
+            if (orderedStops.First().Position > 0)
+            {
+                orderedStops.Insert(0, new Stop(0, orderedStops.First().Color));
+            }
+            if (orderedStops.Last().Position < 255)
+            {
+                orderedStops.Add(new Stop(255, orderedStops.Last().Color));
+            }
+            return orderedStops;
         }
 
         private static float Lerp(float a, float b, float t)
