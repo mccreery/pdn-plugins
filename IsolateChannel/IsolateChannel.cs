@@ -7,10 +7,11 @@ using PaintDotNet.Effects;
 using PaintDotNet.IndirectUI;
 using PaintDotNet.PropertySystem;
 
-namespace AssortedPlugins.UnpackChannel
+namespace AssortedPlugins.IsolateChannel
 {
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
-    public class UnpackChannel : PropertyBasedEffect
+
+    public class IsolateChannel : PropertyBasedEffect
     {
         public enum PropertyName
         {
@@ -65,9 +66,9 @@ namespace AssortedPlugins.UnpackChannel
         private OutputChannels outputChannels;
         private bool invert;
 
-        public UnpackChannel() : base(
-            typeof(UnpackChannel).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
-            new Bitmap(typeof(UnpackChannel), "icon.png"),
+        public IsolateChannel() : base(
+            typeof(IsolateChannel).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
+            new Bitmap(typeof(IsolateChannel), "icon.png"),
             SubmenuNames.Render,
             new EffectOptions() { Flags = EffectFlags.Configurable })
         {
@@ -104,7 +105,7 @@ namespace AssortedPlugins.UnpackChannel
         protected override void OnCustomizeConfigUIWindowProperties(PropertyCollection props)
         {
             base.OnCustomizeConfigUIWindowProperties(props);
-            props[ControlInfoPropertyNames.WindowTitle].Value = typeof(UnpackChannel).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
+            props[ControlInfoPropertyNames.WindowTitle].Value = typeof(IsolateChannel).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
         }
 
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)
