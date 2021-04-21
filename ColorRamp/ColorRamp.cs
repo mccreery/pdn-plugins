@@ -73,13 +73,13 @@ namespace AssortedPlugins.ColorRamp
             List<Property> props = new List<Property>();
 
             props.Add(new Int32Property(PropertyName.Stop1, 0, 0, 255));
-            props.Add(new Int32Property(PropertyName.Stop1Color, (int)ColorBgra.Red.Bgra));
+            props.Add(new Int32Property(PropertyName.Stop1Color, (int)ColorBgra.BgraToUInt32(127, 0, 38, 255)));
 
             props.Add(new Int32Property(PropertyName.Stop2, 127, 0, 255));
-            props.Add(new Int32Property(PropertyName.Stop2Color, (int)ColorBgra.Green.Bgra));
+            props.Add(new Int32Property(PropertyName.Stop2Color, (int)ColorBgra.BgraToUInt32(193, 0, 142, 255)));
 
             props.Add(new Int32Property(PropertyName.Stop3, 255, 0, 255));
-            props.Add(new Int32Property(PropertyName.Stop3Color, (int)ColorBgra.Blue.Bgra));
+            props.Add(new Int32Property(PropertyName.Stop3Color, (int)ColorBgra.BgraToUInt32(221, 178, 255, 255)));
 
             return new PropertyCollection(props);
         }
