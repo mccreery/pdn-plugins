@@ -7,8 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrowAndShrink", "GrowAndShr
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{05AD41AA-011F-4441-BEA4-9A96D7F7E56A}"
 	ProjectSection(SolutionItems) = preProject
-		DefaultPluginInfo.cs = DefaultPluginInfo.cs
-		SharedAssemblyInfo.cs = SharedAssemblyInfo.cs
+		SolutionItems\DefaultPluginInfo.cs = SolutionItems\DefaultPluginInfo.cs
+		SolutionItems\SharedAssemblyInfo.cs = SolutionItems\SharedAssemblyInfo.cs
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoveSeams", "MoveSeams\MoveSeams.csproj", "{35E73ADF-4D0E-4F4D-99A7-763E8ECC2F6B}"

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{0035fb8b-fbda-49df-abd5-5a4ba6fcd92a}</ProjectGuid>
+    <ProjectGuid>{0035FB8B-FBDA-49DF-ABD5-5A4BA6FCD92A}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AssortedPlugins.ColorRamp</RootNamespace>
@@ -54,10 +54,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\DefaultPluginInfo.cs">
+    <Compile Include="..\SolutionItems\DefaultPluginInfo.cs">
       <Link>DefaultPluginInfo.cs</Link>
     </Compile>
-    <Compile Include="..\SharedAssemblyInfo.cs">
+    <Compile Include="..\SolutionItems\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
