@@ -1,6 +1,7 @@
 using PaintDotNet;
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 
 namespace AssortedPlugins.GrowAndShrink
 {
@@ -36,6 +37,22 @@ namespace AssortedPlugins.GrowAndShrink
                 ranges[y].lo = lo;
                 ranges[y].hi = hi;
             }
+        }
+
+        public static Kernel CreateCircle(int radius)
+        {
+            if (radius < 0)
+            {
+                throw new ArgumentException("Negative radius");
+            }
+            int size = radius * 2 + 1;
+
+            Bitmap bitmap = new Bitmap(size, size);
+            Graphics g = Graphics.FromImage(bitmap);
+            g.PixelOffsetMode = PixelOffsetMode.Half;
+            g.FillEllipse(Brushes.Black, 0, 0, bitmap.Width, bitmap.Height);
+
+            return new Kernel(bitmap);
         }
 
         /**

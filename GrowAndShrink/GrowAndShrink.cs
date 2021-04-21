@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Reflection;
 using PaintDotNet;
 using PaintDotNet.Effects;
@@ -67,7 +66,7 @@ namespace AssortedPlugins.GrowAndShrink
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
         {
-            Kernel kernel = GetKernel();
+            Kernel kernel = Kernel.CreateCircle(Math.Abs(radius));
             int endIndex = startIndex + length;
 
             for(int i = startIndex; i < endIndex; i++)
@@ -129,18 +128,6 @@ namespace AssortedPlugins.GrowAndShrink
                 }
             }
             return mask;
-        }
-
-        private Kernel GetKernel()
-        {
-            int size = Math.Abs(radius)*2 + 1;
-
-            Bitmap bitmap = new Bitmap(size, size);
-            Graphics g = Graphics.FromImage(bitmap);
-
-            g.PixelOffsetMode = PixelOffsetMode.Half;
-            g.FillEllipse(Brushes.Black, 0, 0, bitmap.Width, bitmap.Height);
-            return new Kernel(bitmap);
         }
     }
 
