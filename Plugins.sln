@@ -17,6 +17,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorRamp", "ColorRamp\Colo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IsolateChannel", "IsolateChannel\IsolateChannel.csproj", "{4D5B2D80-F9E9-4626-AF7C-DE7826A4FC5B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleanTransparent", "CleanTransparent\CleanTransparent.csproj", "{01DE34FD-CC1F-493C-9DE3-C860DA5F4C6D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoveTransparency", "RemoveTransparency\RemoveTransparency.csproj", "{07F2D84F-9E8B-4316-BA12-2EEFEADA069C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{4D5B2D80-F9E9-4626-AF7C-DE7826A4FC5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D5B2D80-F9E9-4626-AF7C-DE7826A4FC5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D5B2D80-F9E9-4626-AF7C-DE7826A4FC5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01DE34FD-CC1F-493C-9DE3-C860DA5F4C6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01DE34FD-CC1F-493C-9DE3-C860DA5F4C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01DE34FD-CC1F-493C-9DE3-C860DA5F4C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01DE34FD-CC1F-493C-9DE3-C860DA5F4C6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07F2D84F-9E8B-4316-BA12-2EEFEADA069C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07F2D84F-9E8B-4316-BA12-2EEFEADA069C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07F2D84F-9E8B-4316-BA12-2EEFEADA069C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07F2D84F-9E8B-4316-BA12-2EEFEADA069C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
