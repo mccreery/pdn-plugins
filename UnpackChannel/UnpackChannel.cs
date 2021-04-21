@@ -57,7 +57,8 @@ namespace AssortedPlugins.UnpackChannel
             configUI.SetPropertyControlValue(PropertyName.MaskType, ControlInfoPropertyNames.DisplayName, "Mask Type");
 
             configUI.SetPropertyControlType(PropertyName.Invert, PropertyControlType.CheckBox);
-            configUI.SetPropertyControlValue(PropertyName.Invert, ControlInfoPropertyNames.DisplayName, "Invert");
+            configUI.SetPropertyControlValue(PropertyName.Invert, ControlInfoPropertyNames.DisplayName, "");
+            configUI.SetPropertyControlValue(PropertyName.Invert, ControlInfoPropertyNames.Description, "Invert");
 
             return configUI;
         }
