@@ -2,7 +2,7 @@
 
 // See SharedAssemblyInfo.cs for other attributes
 [assembly: AssemblyTitle("Clean Transparent")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Removes color variation in fully transparent pixels.")]
 [assembly: AssemblyVersion("0.1")]
 
-[assembly: AssemblyConfiguration("tag 1|tag 2")]
+[assembly: AssemblyConfiguration("alpha|opacity|transparency|texture")]
