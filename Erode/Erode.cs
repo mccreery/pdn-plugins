@@ -85,6 +85,11 @@ namespace AssortedPlugins
 
             foreach ((Point point, bool marked) in mask)
             {
+                if (IsCancelRequested)
+                {
+                    break;
+                }
+
                 ColorBgra srcColor = src[point];
 
                 if (marked && srcColor.A > 0)
