@@ -22,8 +22,8 @@ namespace AssortedPlugins.MoveSeams
 
         public enum OffsetMode
         {
-            Relative,
-            Absolute
+            Absolute,
+            Relative
         }
 
         private Size offset;
@@ -40,7 +40,7 @@ namespace AssortedPlugins.MoveSeams
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
-            configUI.SetPropertyControlValue(PropertyName.OffsetMode, ControlInfoPropertyNames.DisplayName, "Mode");
+            configUI.SetPropertyControlValue(PropertyName.OffsetMode, ControlInfoPropertyNames.DisplayName, "Offset Mode");
             configUI.SetPropertyControlType(PropertyName.OffsetMode, PropertyControlType.RadioButton);
 
             PropertyControlInfo modeControl = configUI.FindControlForPropertyName(PropertyName.OffsetMode);
@@ -89,12 +89,13 @@ namespace AssortedPlugins.MoveSeams
         {
             List<Property> props = new List<Property>();
 
-            props.Add(StaticListChoiceProperty.CreateForEnum<OffsetMode>(PropertyName.OffsetMode, OffsetMode.Relative, false));
-            props.Add(new DoubleVectorProperty(PropertyName.RelativeOffset, Pair.Create(0.5, 0.5), Pair.Create(-1.0, -1.0), Pair.Create(1.0, 1.0)));
+            props.Add(StaticListChoiceProperty.CreateForEnum<OffsetMode>(PropertyName.OffsetMode, OffsetMode.Absolute, false));
 
             Rectangle bounds = EnvironmentParameters.SelectionBounds;
             props.Add(new Int32Property(PropertyName.AbsoluteOffsetX, (int)Math.Round(bounds.Width / 2.0), -bounds.Width, bounds.Width));
             props.Add(new Int32Property(PropertyName.AbsoluteOffsetY, (int)Math.Round(bounds.Height / 2.0), -bounds.Height, bounds.Height));
+
+            props.Add(new DoubleVectorProperty(PropertyName.RelativeOffset, Pair.Create(0.5, 0.5), Pair.Create(-1.0, -1.0), Pair.Create(1.0, 1.0)));
 
             List<PropertyCollectionRule> rules = new List<PropertyCollectionRule>();
 
