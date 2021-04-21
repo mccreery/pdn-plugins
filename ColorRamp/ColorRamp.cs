@@ -9,6 +9,7 @@ using PaintDotNet.PropertySystem;
 namespace AssortedPlugins.ColorRamp
 {
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
+    [EffectCategory(EffectCategory.Adjustment)]
     public class ColorRamp : PropertyBasedEffect
     {
         private int exampleProperty;
@@ -16,7 +17,7 @@ namespace AssortedPlugins.ColorRamp
         public ColorRamp() : base(
             typeof(ColorRamp).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
             new Bitmap(typeof(ColorRamp), "icon.png"),
-            SubmenuNames.Render,
+            null,
             new EffectOptions() { Flags = EffectFlags.Configurable })
         {
         }
