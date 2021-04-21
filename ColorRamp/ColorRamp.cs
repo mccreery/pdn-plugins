@@ -21,6 +21,7 @@ namespace AssortedPlugins.ColorRamp
             EnableMidStop,
             MidStop,
             MidStopColor,
+            EnableHighStop,
             HighStop,
             HighStopColor
         }
@@ -58,15 +59,19 @@ namespace AssortedPlugins.ColorRamp
 
             configUI.SetPropertyControlType(PropertyName.EnableMidStop, PropertyControlType.CheckBox);
             configUI.SetPropertyControlValue(PropertyName.EnableMidStop, ControlInfoPropertyNames.DisplayName, "Mid Stop");
-            configUI.SetPropertyControlValue(PropertyName.EnableMidStop, ControlInfoPropertyNames.Description, "Enable");
+            configUI.SetPropertyControlValue(PropertyName.EnableMidStop, ControlInfoPropertyNames.Description, "Enable Mid Stop");
 
             configUI.SetPropertyControlType(PropertyName.MidStop, PropertyControlType.Slider);
             configUI.SetPropertyControlValue(PropertyName.MidStop, ControlInfoPropertyNames.DisplayName, "");
             configUI.SetPropertyControlType(PropertyName.MidStopColor, PropertyControlType.ColorWheel);
             configUI.SetPropertyControlValue(PropertyName.MidStopColor, ControlInfoPropertyNames.DisplayName, "Mid Stop Color");
 
+            configUI.SetPropertyControlType(PropertyName.EnableHighStop, PropertyControlType.CheckBox);
+            configUI.SetPropertyControlValue(PropertyName.EnableHighStop, ControlInfoPropertyNames.DisplayName, "High Stop");
+            configUI.SetPropertyControlValue(PropertyName.EnableHighStop, ControlInfoPropertyNames.Description, "Enable High Stop");
+
             configUI.SetPropertyControlType(PropertyName.HighStop, PropertyControlType.Slider);
-            configUI.SetPropertyControlValue(PropertyName.HighStop, ControlInfoPropertyNames.DisplayName, "High Stop");
+            configUI.SetPropertyControlValue(PropertyName.HighStop, ControlInfoPropertyNames.DisplayName, "");
             configUI.SetPropertyControlType(PropertyName.HighStopColor, PropertyControlType.ColorWheel);
             configUI.SetPropertyControlValue(PropertyName.HighStopColor, ControlInfoPropertyNames.DisplayName, "High Stop Color");
 
@@ -88,8 +93,12 @@ namespace AssortedPlugins.ColorRamp
             rules.Add(new ReadOnlyBoundToBooleanRule(PropertyName.MidStop, PropertyName.EnableMidStop, true));
             rules.Add(new ReadOnlyBoundToBooleanRule(PropertyName.MidStopColor, PropertyName.EnableMidStop, true));
 
+            props.Add(new BooleanProperty(PropertyName.EnableHighStop, true));
             props.Add(new Int32Property(PropertyName.HighStop, 255, 0, 255));
             props.Add(new Int32Property(PropertyName.HighStopColor, (int)ColorBgra.White.Bgra));
+
+            rules.Add(new ReadOnlyBoundToBooleanRule(PropertyName.HighStop, PropertyName.EnableHighStop, true));
+            rules.Add(new ReadOnlyBoundToBooleanRule(PropertyName.HighStopColor, PropertyName.EnableHighStop, true));
 
             return new PropertyCollection(props, rules);
         }
@@ -116,9 +125,12 @@ namespace AssortedPlugins.ColorRamp
                     ColorBgra.FromUInt32((uint)newToken.GetProperty<Int32Property>(PropertyName.MidStopColor).Value)));
             }
 
-            stops.Add(new Stop(
-                newToken.GetProperty<Int32Property>(PropertyName.HighStop).Value,
-                ColorBgra.FromUInt32((uint)newToken.GetProperty<Int32Property>(PropertyName.HighStopColor).Value)));
+            if (newToken.GetProperty<BooleanProperty>(PropertyName.EnableHighStop).Value)
+            {
+                stops.Add(new Stop(
+                    newToken.GetProperty<Int32Property>(PropertyName.HighStop).Value,
+                    ColorBgra.FromUInt32((uint)newToken.GetProperty<Int32Property>(PropertyName.HighStopColor).Value)));
+            }
         }
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
