@@ -21,8 +21,7 @@ namespace AssortedPlugins.ColorRamp
             Stop2,
             Stop2Color,
             Stop3,
-            Stop3Color,
-            IgnoreTransparentPixels
+            Stop3Color
         }
 
         private struct Stop
@@ -38,7 +37,6 @@ namespace AssortedPlugins.ColorRamp
         }
 
         private Stop[] stops = new Stop[3];
-        private bool ignoreTransparentPixels;
 
         public ColorRamp() : base(
             typeof(ColorRamp).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
@@ -67,10 +65,6 @@ namespace AssortedPlugins.ColorRamp
             configUI.SetPropertyControlType(PropertyName.Stop3Color, PropertyControlType.ColorWheel);
             configUI.SetPropertyControlValue(PropertyName.Stop3Color, ControlInfoPropertyNames.DisplayName, "Color 3");
 
-            configUI.SetPropertyControlType(PropertyName.IgnoreTransparentPixels, PropertyControlType.CheckBox);
-            configUI.SetPropertyControlValue(PropertyName.IgnoreTransparentPixels, ControlInfoPropertyNames.DisplayName, "");
-            configUI.SetPropertyControlValue(PropertyName.IgnoreTransparentPixels, ControlInfoPropertyNames.Description, "Ignore transparent pixels");
-
             return configUI;
         }
 
@@ -86,8 +80,6 @@ namespace AssortedPlugins.ColorRamp
 
             props.Add(new Int32Property(PropertyName.Stop3, 255, 0, 255));
             props.Add(new Int32Property(PropertyName.Stop3Color, (int)ColorBgra.Blue.Bgra));
-
-            props.Add(new BooleanProperty(PropertyName.IgnoreTransparentPixels, true));
 
             return new PropertyCollection(props);
         }
@@ -113,8 +105,6 @@ namespace AssortedPlugins.ColorRamp
             stops[2] = new Stop(
                 newToken.GetProperty<Int32Property>(PropertyName.Stop3).Value,
                 ColorBgra.FromUInt32((uint)newToken.GetProperty<Int32Property>(PropertyName.Stop3Color).Value));
-
-            ignoreTransparentPixels = newToken.GetProperty<BooleanProperty>(PropertyName.IgnoreTransparentPixels).Value;
         }
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
@@ -149,16 +139,12 @@ namespace AssortedPlugins.ColorRamp
                 for (int x = rect.Left; x < rect.Right; x++)
                 {
                     ColorBgra srcColor = src[x, y];
+                    int brightness = (int)Math.Round((srcColor.R + srcColor.G + srcColor.B) / 3.0);
 
-                    if (ignoreTransparentPixels && srcColor.A == 0)
-                    {
-                        dst[x, y] = srcColor;
-                    }
-                    else
-                    {
-                        int brightness = (int)Math.Round((srcColor.R + srcColor.G + srcColor.B) / 3.0);
-                        dst[x, y] = lut[brightness];
-                    }
+                    ColorBgra dstColor = lut[brightness];
+                    dstColor.A = ByteUtil.FastScale(srcColor.A, dstColor.A);
+
+                    dst[x, y] = dstColor;
                 }
             }
         }
