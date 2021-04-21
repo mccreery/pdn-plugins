@@ -11,7 +11,7 @@ namespace AssortedPlugins.RemoveTransparency
         public RemoveTransparency() : base(
             typeof(RemoveTransparency).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
             new Bitmap(typeof(RemoveTransparency), "icon.png"),
-            SubmenuNames.Render,
+            "Texture",
             new EffectOptions())
         {
         }

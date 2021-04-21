@@ -21,7 +21,7 @@ namespace AssortedPlugins.CleanTransparent
         public CleanTransparent() : base(
             typeof(CleanTransparent).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
             new Bitmap(typeof(CleanTransparent), "icon.png"),
-            SubmenuNames.Render,
+            "Texture",
             new EffectOptions() { Flags = EffectFlags.Configurable })
         {
         }

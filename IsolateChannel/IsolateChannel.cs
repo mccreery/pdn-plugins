@@ -69,7 +69,7 @@ namespace AssortedPlugins.IsolateChannel
         public IsolateChannel() : base(
             typeof(IsolateChannel).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
             new Bitmap(typeof(IsolateChannel), "icon.png"),
-            SubmenuNames.Render,
+            "Texture",
             new EffectOptions() { Flags = EffectFlags.Configurable })
         {
         }

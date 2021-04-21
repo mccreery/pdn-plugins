@@ -31,7 +31,7 @@ namespace AssortedPlugins.MoveSeams
         public MoveSeams() : base(
             typeof(MoveSeams).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
             new Bitmap(typeof(MoveSeams), "icon.png"),
-            SubmenuNames.Distort,
+            "Texture",
             new EffectOptions() { Flags = EffectFlags.Configurable })
         {
         }
