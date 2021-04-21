@@ -62,7 +62,6 @@
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="BitMask.cs" />
-    <Compile Include="Extensions.cs" />
     <Compile Include="Kernel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="GrowAndShrink.cs" />
