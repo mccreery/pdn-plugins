@@ -1,4 +1,5 @@
 @echo off
+cd /d %~dp0
 set /p store=Install to Windows Store version of paint.net? (Y/N)
 
 if %store% == y set store=Y
