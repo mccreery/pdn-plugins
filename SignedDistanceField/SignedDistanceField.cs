@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
 using PaintDotNet;
@@ -12,13 +12,22 @@ namespace AssortedPlugins.SignedDistanceField
     [PluginSupportInfo(typeof(DefaultPluginInfo))]
     public class SignedDistanceField : PropertyBasedEffect
     {
-        private int exampleProperty;
+        public enum PropertyNames
+        {
+            AlphaThreshold,
+            Scale,
+            Bias
+        }
+
+        private byte alphaThreshold;
+        private float scale;
+        private byte bias;
 
         public SignedDistanceField() : base(
             typeof(SignedDistanceField).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
             new Bitmap(typeof(SignedDistanceField), "icon.png"),
             SubmenuNames.Render,
-            new EffectOptions() { Flags = EffectFlags.Configurable })
+            new EffectOptions() { Flags = EffectFlags.Configurable, RenderingSchedule = EffectRenderingSchedule.None })
         {
         }
 
@@ -26,8 +35,10 @@ namespace AssortedPlugins.SignedDistanceField
         {
             ControlInfo configUI = CreateDefaultConfigUI(props);
 
-            configUI.SetPropertyControlType(nameof(exampleProperty), PropertyControlType.ColorWheel);
-            configUI.SetPropertyControlValue(nameof(exampleProperty), ControlInfoPropertyNames.DisplayName, "Example Property");
+            configUI.SetPropertyControlType(PropertyNames.AlphaThreshold, PropertyControlType.Slider);
+            configUI.SetPropertyControlValue(PropertyNames.AlphaThreshold, ControlInfoPropertyNames.DisplayName, "Alpha Threshold");
+            configUI.SetPropertyControlType(PropertyNames.Scale, PropertyControlType.Slider);
+            configUI.SetPropertyControlType(PropertyNames.Bias, PropertyControlType.Slider);
 
             return configUI;
         }
@@ -35,7 +46,10 @@ namespace AssortedPlugins.SignedDistanceField
         protected override PropertyCollection OnCreatePropertyCollection()
         {
             List<Property> props = new List<Property>();
-            props.Add(new Int32Property(nameof(exampleProperty), (int)(uint)EnvironmentParameters.PrimaryColor));
+
+            props.Add(new Int32Property(PropertyNames.AlphaThreshold, 127, 0, 255));
+            props.Add(new DoubleProperty(PropertyNames.Scale, 1, 0, 16));
+            props.Add(new Int32Property(PropertyNames.Bias, 127, 0, 255));
 
             return new PropertyCollection(props);
         }
@@ -49,21 +63,16 @@ namespace AssortedPlugins.SignedDistanceField
         protected override void OnSetRenderInfo(PropertyBasedEffectConfigToken newToken, RenderArgs dstArgs, RenderArgs srcArgs)
         {
             base.OnSetRenderInfo(newToken, dstArgs, srcArgs);
-            exampleProperty = newToken.GetProperty<Int32Property>(nameof(exampleProperty)).Value;
+
+            alphaThreshold = (byte)newToken.GetProperty<Int32Property>(PropertyNames.AlphaThreshold).Value;
+            scale = (float)newToken.GetProperty<DoubleProperty>(PropertyNames.Scale).Value;
+            bias = (byte)newToken.GetProperty<Int32Property>(PropertyNames.Bias).Value;
         }
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
         {
-            int endIndex = startIndex + length;
-
-            for (int i = startIndex; i < endIndex; i++)
-            {
-                Render(DstArgs.Surface, SrcArgs.Surface, renderRects[i]);
-            }
-        }
-
-        void Render(Surface dst, Surface src, Rectangle rect)
-        {
+            Debug.Assert(length == 1);
+            Rectangle rectangle = renderRects[startIndex];
         }
     }
 }

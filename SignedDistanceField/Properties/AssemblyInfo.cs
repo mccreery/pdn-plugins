@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 
 // See SharedAssemblyInfo.cs for other attributes
-[assembly: AssemblyTitle("SignedDistanceField")]
+[assembly: AssemblyTitle("Signed Distance Field")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyVersion("1.0")]
 
