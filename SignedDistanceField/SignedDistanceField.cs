@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
+using System.Threading.Tasks;
 using PaintDotNet;
 using PaintDotNet.Effects;
 using PaintDotNet.IndirectUI;
@@ -167,8 +168,7 @@ namespace AssortedPlugins.SignedDistanceField
                 }
             }
 
-            FastSweep(distanceField);
-            FastSweep(invertedField);
+            Parallel.Invoke(() => FastSweep(distanceField), () => FastSweep(invertedField));
         }
 
         private void FastSweep(VectorField distanceField)
