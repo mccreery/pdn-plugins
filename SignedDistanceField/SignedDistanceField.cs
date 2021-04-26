@@ -45,7 +45,7 @@ namespace AssortedPlugins.SignedDistanceField
         public SignedDistanceField() : base(
             typeof(SignedDistanceField).Assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title,
             new Bitmap(typeof(SignedDistanceField), "icon.png"),
-            SubmenuNames.Render,
+            "Texture",
             new EffectOptions() { Flags = EffectFlags.Configurable, RenderingSchedule = EffectRenderingSchedule.None })
         {
         }
