@@ -66,9 +66,9 @@ namespace AssortedPlugins.SignedDistanceField
         {
             List<Property> props = new List<Property>();
 
-            props.Add(new Int32Property(PropertyNames.AlphaThreshold, 127, 0, 255));
+            props.Add(new Int32Property(PropertyNames.AlphaThreshold, 128, 0, 255));
             props.Add(new DoubleProperty(PropertyNames.Scale, 1, 0, 16));
-            props.Add(new Int32Property(PropertyNames.Bias, 127, 0, 255));
+            props.Add(new Int32Property(PropertyNames.Bias, 128, 0, 255));
 
             return new PropertyCollection(props);
         }
