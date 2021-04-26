@@ -108,7 +108,6 @@ namespace AssortedPlugins.SignedDistanceField
             if (fieldsDirty)
             {
                 GenerateFields();
-                fieldsDirty = false;
             }
 
             Point position = default;
@@ -130,6 +129,11 @@ namespace AssortedPlugins.SignedDistanceField
 
                     DstArgs.Surface[position] = ColorBgra.FromBgr(brightness, brightness, brightness);
                 }
+            }
+
+            if (!IsCancelRequested)
+            {
+                fieldsDirty = false;
             }
         }
 
