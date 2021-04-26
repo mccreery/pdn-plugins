@@ -114,6 +114,8 @@ namespace AssortedPlugins.SignedDistanceField
             Point position = default;
             for (position.Y = rectangle.Top; position.Y < rectangle.Bottom; position.Y++)
             {
+                if (IsCancelRequested) { break; }
+
                 for (position.X = rectangle.Left; position.X < rectangle.Right; position.X++)
                 {
                     Point fieldPosition = position - (Size)rectangle.Location;
@@ -142,6 +144,8 @@ namespace AssortedPlugins.SignedDistanceField
 
             for (position.Y = rectangle.Top; position.Y < rectangle.Bottom; position.Y++)
             {
+                if (IsCancelRequested) { break; }
+
                 for (position.X = rectangle.Left; position.X < rectangle.Right; position.X++)
                 {
                     Point fieldPosition = position - (Size)rectangle.Location;
@@ -163,12 +167,14 @@ namespace AssortedPlugins.SignedDistanceField
             FastSweep(invertedField);
         }
 
-        private static void FastSweep(VectorField distanceField)
+        private void FastSweep(VectorField distanceField)
         {
             Point position = default;
 
             for (position.Y = 0; position.Y < distanceField.Height; position.Y++)
             {
+                if (IsCancelRequested) { break; }
+
                 for (position.X = 0; position.X < distanceField.Width; position.X++)
                 {
                     SizeF currentDistance = distanceField[position];
@@ -188,6 +194,8 @@ namespace AssortedPlugins.SignedDistanceField
 
             for (position.Y = distanceField.Height - 1; position.Y >= 0; position.Y--)
             {
+                if (IsCancelRequested) { break; }
+
                 for (position.X = distanceField.Width - 1; position.X >= 0; position.X--)
                 {
                     SizeF currentDistance = distanceField[position];
