@@ -183,10 +183,9 @@ namespace AssortedPlugins.SignedDistanceField
                 {
                     SizeF currentDistance = distanceField[position];
 
-                    foreach (Size offset in new[] { Left, Up, LeftUp, RightUp })
-                    {
-                        currentDistance = MinMagnitude(currentDistance, distanceField[position + offset] + offset);
-                    }
+                    currentDistance = MinMagnitude(currentDistance, distanceField[position + Left] + Left);
+                    currentDistance = MinMagnitude(currentDistance, distanceField[position + Up] + Up);
+
                     distanceField[position] = currentDistance;
                 }
 
@@ -204,10 +203,9 @@ namespace AssortedPlugins.SignedDistanceField
                 {
                     SizeF currentDistance = distanceField[position];
 
-                    foreach (Size offset in new[] { Right, Down, LeftDown, RightDown })
-                    {
-                        currentDistance = MinMagnitude(currentDistance, distanceField[position + offset] + offset);
-                    }
+                    currentDistance = MinMagnitude(currentDistance, distanceField[position + Right] + Right);
+                    currentDistance = MinMagnitude(currentDistance, distanceField[position + Down] + Down);
+
                     distanceField[position] = currentDistance;
                 }
 
