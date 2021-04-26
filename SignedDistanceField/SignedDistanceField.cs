@@ -118,7 +118,12 @@ namespace AssortedPlugins.SignedDistanceField
                 {
                     Point fieldPosition = position - (Size)rectangle.Location;
 
-                    float signedDistance = distanceField[fieldPosition].Magnitude() - invertedField[fieldPosition].Magnitude();
+                    float positiveInfluence = distanceField[fieldPosition].Magnitude();
+                    float negativeInfluence = invertedField[fieldPosition].Magnitude();
+                    // 1 pixel gap to remove jump from -1 to 1 at border
+                    negativeInfluence = Math.Max(0, negativeInfluence - 1);
+
+                    float signedDistance = positiveInfluence - negativeInfluence;
                     byte brightness = (byte)Math.Max(0, Math.Min(255, Math.Round(signedDistance * scale + bias)));
 
                     DstArgs.Surface[position] = ColorBgra.FromBgr(brightness, brightness, brightness);
