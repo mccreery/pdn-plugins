@@ -99,8 +99,11 @@ namespace AssortedPlugins.SignedDistanceField
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
         {
-            Debug.Assert(length == 1);
             rectangle = renderRects[startIndex];
+            for(int i = 1; i < length; i++)
+            {
+                rectangle = Rectangle.Union(rectangle, renderRects[startIndex + i]);
+            }
 
             if (fieldsDirty)
             {
