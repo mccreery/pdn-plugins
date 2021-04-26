@@ -8,28 +8,31 @@ namespace AssortedPlugins.SignedDistanceField
         public int Width => Size.Width;
         public int Height => Size.Height;
 
+        readonly int boundaryWidth;
         readonly SizeF[,] data;
 
-        public VectorField(Size size)
+        public VectorField(Size size, int boundaryWidth, SizeF boundaryValue)
         {
             Size = size;
-            data = new SizeF[size.Height, size.Width];
+            this.boundaryWidth = boundaryWidth;
+
+            int dataWidth = size.Width + boundaryWidth * 2;
+            int dataHeight = size.Height + boundaryWidth * 2;
+            data = new SizeF[dataHeight, dataWidth];
+
+            for (int y = 0; y < dataHeight; y++)
+            {
+                for (int x = 0; x < dataWidth; x++)
+                {
+                    data[y, x] = boundaryValue;
+                }
+            }
         }
 
         public SizeF this[Point position]
         {
-            get
-            {
-                if (new Rectangle(Point.Empty, Size).Contains(position))
-                {
-                    return data[position.Y, position.X];
-                }
-                else
-                {
-                    return new SizeF(float.PositiveInfinity, float.PositiveInfinity);
-                }
-            }
-            set => data[position.Y, position.X] = value;
+            get => data[position.Y + boundaryWidth, position.X + boundaryWidth];
+            set => data[position.Y + boundaryWidth, position.X + boundaryWidth] = value;
         }
     }
 }

@@ -140,8 +140,8 @@ namespace AssortedPlugins.SignedDistanceField
 
         private void GenerateFields()
         {
-            distanceField = new VectorField(rectangle.Size);
-            invertedField = new VectorField(rectangle.Size);
+            distanceField = new VectorField(rectangle.Size, 1, new SizeF(float.PositiveInfinity, float.PositiveInfinity));
+            invertedField = new VectorField(rectangle.Size, 1, new SizeF(float.PositiveInfinity, float.PositiveInfinity));
 
             // Initialize distance to infinity outside the shape and 0 inside
             // Inverted field is initialized with the opposite
