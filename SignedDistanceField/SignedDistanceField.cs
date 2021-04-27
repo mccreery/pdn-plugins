@@ -20,10 +20,7 @@ namespace AssortedPlugins.SignedDistanceField
             Bias
         }
 
-        private bool fieldsDirty = true;
-        private Size[,] distanceField;
-        private Size[,] invertedField;
-        private Rectangle rectangle;
+        private float[,] cachedField;
 
         private byte alphaThreshold;
         private byte AlphaThreshold
@@ -34,7 +31,7 @@ namespace AssortedPlugins.SignedDistanceField
                 if (value != alphaThreshold)
                 {
                     alphaThreshold = value;
-                    fieldsDirty = true;
+                    cachedField = null;
                 }
             }
         }
@@ -90,44 +87,39 @@ namespace AssortedPlugins.SignedDistanceField
 
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
         {
-            rectangle = renderRects[startIndex];
+            Rectangle rectangle = renderRects[startIndex];
             for(int i = 1; i < length; i++)
             {
                 rectangle = Rectangle.Union(rectangle, renderRects[startIndex + i]);
             }
 
-            if (fieldsDirty)
-            {
-                GenerateFields();
-            }
+            float[,] field = cachedField ?? GenerateField(rectangle);
 
             for (int y = 0; y < rectangle.Height; y++)
             {
                 if (IsCancelRequested) { break; }
                 for (int x = 0; x < rectangle.Width; x++)
                 {
-                    float positiveInfluence = distanceField[y, x].Magnitude();
-                    float negativeInfluence = invertedField[y, x].Magnitude();
-                    // 1 pixel gap to remove jump from -1 to 1 at border
-                    negativeInfluence = Math.Max(0, negativeInfluence - 1);
+                    float signedDistance = field[y, x];
+                    signedDistance = signedDistance * scale + bias;
 
-                    float signedDistance = positiveInfluence - negativeInfluence;
-                    byte brightness = (byte)Math.Max(0, Math.Min(255, Math.Round(signedDistance * scale + bias)));
+                    byte brightness = (byte)Clamp(0, 255, signedDistance);
+                    ColorBgra color = ColorBgra.FromBgr(brightness, brightness, brightness);
 
-                    DstArgs.Surface[rectangle.X + x, rectangle.Y + y] = ColorBgra.FromBgr(brightness, brightness, brightness);
+                    DstArgs.Surface[rectangle.X + x, rectangle.Y + y] = color;
                 }
             }
 
             if (!IsCancelRequested)
             {
-                fieldsDirty = false;
+                cachedField = field;
             }
         }
 
-        private void GenerateFields()
+        private float[,] GenerateField(Rectangle rectangle)
         {
-            distanceField = new Size[rectangle.Height, rectangle.Width];
-            invertedField = new Size[rectangle.Height, rectangle.Width];
+            Size[,] distanceField = new Size[rectangle.Height, rectangle.Width];
+            Size[,] invertedField = new Size[rectangle.Height, rectangle.Width];
 
             // Initialize distance to infinity outside the shape and 0 inside
             // Inverted field is initialized with the opposite
@@ -155,6 +147,24 @@ namespace AssortedPlugins.SignedDistanceField
                 () => ScanUp(distanceField),
                 () => ScanDown(invertedField),
                 () => ScanUp(invertedField));
+
+            float[,] signedDistanceField = new float[rectangle.Height, rectangle.Width];
+            for (int y = 0; y < rectangle.Height; y++)
+            {
+                if (IsCancelRequested) { break; }
+
+                for (int x = 0; x < rectangle.Width; x++)
+                {
+                    float positiveInfluence = distanceField[y, x].Magnitude();
+                    float negativeInfluence = invertedField[y, x].Magnitude();
+
+                    // 1 pixel gap to remove jump from -1 to 1 at border
+                    negativeInfluence = Math.Max(0, negativeInfluence - 1);
+
+                    signedDistanceField[y, x] = positiveInfluence - negativeInfluence;
+                }
+            }
+            return signedDistanceField;
         }
 
         private void ScanDown(Size[,] distanceField)
@@ -206,6 +216,11 @@ namespace AssortedPlugins.SignedDistanceField
         private static Size MinMagnitude(Size a, Size b)
         {
             return a.MagnitudeSquared() < b.MagnitudeSquared() ? a : b;
+        }
+
+        private static float Clamp(float min, float max, float x)
+        {
+            return Math.Max(min, Math.Min(max, x));
         }
     }
 }
