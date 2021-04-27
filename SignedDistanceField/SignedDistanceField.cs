@@ -22,8 +22,8 @@ namespace AssortedPlugins.SignedDistanceField
         }
 
         private bool fieldsDirty = true;
-        private VectorField distanceField;
-        private VectorField invertedField;
+        private Size[,] distanceField;
+        private Size[,] invertedField;
         private Rectangle rectangle;
 
         private byte alphaThreshold;
@@ -111,24 +111,20 @@ namespace AssortedPlugins.SignedDistanceField
                 GenerateFields();
             }
 
-            Point position = default;
-            for (position.Y = rectangle.Top; position.Y < rectangle.Bottom; position.Y++)
+            for (int y = 0; y < rectangle.Height; y++)
             {
                 if (IsCancelRequested) { break; }
-
-                for (position.X = rectangle.Left; position.X < rectangle.Right; position.X++)
+                for (int x = 0; x < rectangle.Width; x++)
                 {
-                    Point fieldPosition = position - (Size)rectangle.Location;
-
-                    float positiveInfluence = distanceField[fieldPosition].Magnitude();
-                    float negativeInfluence = invertedField[fieldPosition].Magnitude();
+                    float positiveInfluence = distanceField[y, x].Magnitude();
+                    float negativeInfluence = invertedField[y, x].Magnitude();
                     // 1 pixel gap to remove jump from -1 to 1 at border
                     negativeInfluence = Math.Max(0, negativeInfluence - 1);
 
                     float signedDistance = positiveInfluence - negativeInfluence;
                     byte brightness = (byte)Math.Max(0, Math.Min(255, Math.Round(signedDistance * scale + bias)));
 
-                    DstArgs.Surface[position] = ColorBgra.FromBgr(brightness, brightness, brightness);
+                    DstArgs.Surface[rectangle.X + x, rectangle.Y + y] = ColorBgra.FromBgr(brightness, brightness, brightness);
                 }
             }
 
@@ -140,30 +136,26 @@ namespace AssortedPlugins.SignedDistanceField
 
         private void GenerateFields()
         {
-            distanceField = new VectorField(rectangle.Size, 1, new SizeF(float.PositiveInfinity, float.PositiveInfinity));
-            invertedField = new VectorField(rectangle.Size, 1, new SizeF(float.PositiveInfinity, float.PositiveInfinity));
+            distanceField = new Size[rectangle.Height, rectangle.Width];
+            invertedField = new Size[rectangle.Height, rectangle.Width];
 
             // Initialize distance to infinity outside the shape and 0 inside
             // Inverted field is initialized with the opposite
-            Point position = default;
-
-            for (position.Y = rectangle.Top; position.Y < rectangle.Bottom; position.Y++)
+            for (int y = 0; y < rectangle.Height; y++)
             {
                 if (IsCancelRequested) { break; }
 
-                for (position.X = rectangle.Left; position.X < rectangle.Right; position.X++)
+                for (int x = 0; x < rectangle.Width; x++)
                 {
-                    Point fieldPosition = position - (Size)rectangle.Location;
-
-                    if (SrcArgs.Surface[position].A >= AlphaThreshold)
+                    if (SrcArgs.Surface[rectangle.X + x, rectangle.Y + y].A >= AlphaThreshold)
                     {
-                        distanceField[fieldPosition] = SizeF.Empty;
-                        invertedField[fieldPosition] = new SizeF(float.PositiveInfinity, float.PositiveInfinity);
+                        distanceField[y, x] = Size.Empty;
+                        invertedField[y, x] = rectangle.Size;
                     }
                     else
                     {
-                        distanceField[fieldPosition] = new SizeF(float.PositiveInfinity, float.PositiveInfinity);
-                        invertedField[fieldPosition] = SizeF.Empty;
+                        distanceField[y, x] = rectangle.Size;
+                        invertedField[y, x] = Size.Empty;
                     }
                 }
             }
@@ -175,55 +167,51 @@ namespace AssortedPlugins.SignedDistanceField
                 () => ScanUp(invertedField));
         }
 
-        private void ScanDown(VectorField distanceField)
+        private void ScanDown(Size[,] distanceField)
         {
-            Point position = default;
-            for (position.Y = 0; position.Y < distanceField.Height; position.Y++)
+            for (int y = 1; y < rectangle.Height; y++)
             {
                 if (IsCancelRequested) { break; }
-
-                for (position.X = 0; position.X < distanceField.Width; position.X++)
+                for (int x = 0; x < rectangle.Width; x++)
                 {
-                    SizeF currentDistance = distanceField[position];
+                    Size currentDistance = distanceField[y, x];
 
-                    currentDistance = MinMagnitude(currentDistance, distanceField[position + Left] + Left);
-                    currentDistance = MinMagnitude(currentDistance, distanceField[position + Up] + Up);
+                    if (x > 0) currentDistance = MinMagnitude(currentDistance, distanceField[y, x - 1] + Left);
+                    currentDistance = MinMagnitude(currentDistance, distanceField[y - 1, x] + Up);
 
-                    distanceField[position] = currentDistance;
+                    distanceField[y, x] = currentDistance;
                 }
 
-                for (position.X = distanceField.Width - 1; position.X >= 0; position.X--)
+                for (int x = rectangle.Width - 2; x >= 0; x--)
                 {
-                    distanceField[position] = MinMagnitude(distanceField[position], distanceField[position + Right] + Right);
+                    distanceField[y, x] = MinMagnitude(distanceField[y, x], distanceField[y, x + 1] + Right);
                 }
             }
         }
 
-        private void ScanUp(VectorField distanceField)
+        private void ScanUp(Size[,] distanceField)
         {
-            Point position = default;
-            for (position.Y = distanceField.Height - 1; position.Y >= 0; position.Y--)
+            for (int y = rectangle.Height - 2; y >= 0; y--)
             {
                 if (IsCancelRequested) { break; }
-
-                for (position.X = distanceField.Width - 1; position.X >= 0; position.X--)
+                for (int x = 0; x < rectangle.Width; x++)
                 {
-                    SizeF currentDistance = distanceField[position];
+                    Size currentDistance = distanceField[y, x];
 
-                    currentDistance = MinMagnitude(currentDistance, distanceField[position + Right] + Right);
-                    currentDistance = MinMagnitude(currentDistance, distanceField[position + Down] + Down);
+                    if (x > 0) currentDistance = MinMagnitude(currentDistance, distanceField[y, x - 1] + Left);
+                    currentDistance = MinMagnitude(currentDistance, distanceField[y + 1, x] + Down);
 
-                    distanceField[position] = currentDistance;
+                    distanceField[y, x] = currentDistance;
                 }
 
-                for (position.X = 0; position.X < distanceField.Width; position.X++)
+                for (int x = rectangle.Width - 2; x >= 0; x--)
                 {
-                    distanceField[position] = MinMagnitude(distanceField[position], distanceField[position + Left] + Left);
+                    distanceField[y, x] = MinMagnitude(distanceField[y, x], distanceField[y, x + 1] + Right);
                 }
             }
         }
 
-        private static SizeF MinMagnitude(SizeF a, SizeF b)
+        private static Size MinMagnitude(Size a, Size b)
         {
             return a.MagnitudeSquared() < b.MagnitudeSquared() ? a : b;
         }
