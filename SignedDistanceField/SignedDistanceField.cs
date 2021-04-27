@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -89,15 +88,6 @@ namespace AssortedPlugins.SignedDistanceField
             bias = (byte)newToken.GetProperty<Int32Property>(PropertyNames.Bias).Value;
         }
 
-        private static readonly Size Right = new Size(1, 0);
-        private static readonly Size RightDown = new Size(1, 1);
-        private static readonly Size Down = new Size(0, 1);
-        private static readonly Size LeftDown = new Size(-1, 1);
-        private static readonly Size Left = new Size(-1, 0);
-        private static readonly Size LeftUp = new Size(-1, -1);
-        private static readonly Size Up = new Size(0, -1);
-        private static readonly Size RightUp = new Size(1, -1);
-
         protected override void OnRender(Rectangle[] renderRects, int startIndex, int length)
         {
             rectangle = renderRects[startIndex];
@@ -169,45 +159,47 @@ namespace AssortedPlugins.SignedDistanceField
 
         private void ScanDown(Size[,] distanceField)
         {
-            for (int y = 1; y < rectangle.Height; y++)
+            for (int y = 1; y < distanceField.GetLength(0); y++)
             {
                 if (IsCancelRequested) { break; }
-                for (int x = 0; x < rectangle.Width; x++)
+                for (int x = 0; x < distanceField.GetLength(1); x++)
                 {
-                    Size currentDistance = distanceField[y, x];
-
-                    if (x > 0) currentDistance = MinMagnitude(currentDistance, distanceField[y, x - 1] + Left);
-                    currentDistance = MinMagnitude(currentDistance, distanceField[y - 1, x] + Up);
-
-                    distanceField[y, x] = currentDistance;
+                    distanceField[y, x] = MinMagnitude(distanceField[y, x], distanceField[y - 1, x] + new Size(0, 1));
                 }
 
-                for (int x = rectangle.Width - 2; x >= 0; x--)
-                {
-                    distanceField[y, x] = MinMagnitude(distanceField[y, x], distanceField[y, x + 1] + Right);
-                }
+                ScanLeft(distanceField, y);
+                ScanRight(distanceField, y);
             }
         }
 
         private void ScanUp(Size[,] distanceField)
         {
-            for (int y = rectangle.Height - 2; y >= 0; y--)
+            for (int y = distanceField.GetLength(0) - 2; y >= 0; y--)
             {
                 if (IsCancelRequested) { break; }
-                for (int x = 0; x < rectangle.Width; x++)
+                for (int x = 0; x < distanceField.GetLength(1); x++)
                 {
-                    Size currentDistance = distanceField[y, x];
-
-                    if (x > 0) currentDistance = MinMagnitude(currentDistance, distanceField[y, x - 1] + Left);
-                    currentDistance = MinMagnitude(currentDistance, distanceField[y + 1, x] + Down);
-
-                    distanceField[y, x] = currentDistance;
+                    distanceField[y, x] = MinMagnitude(distanceField[y, x], distanceField[y + 1, x] + new Size(0, 1));
                 }
 
-                for (int x = rectangle.Width - 2; x >= 0; x--)
-                {
-                    distanceField[y, x] = MinMagnitude(distanceField[y, x], distanceField[y, x + 1] + Right);
-                }
+                ScanLeft(distanceField, y);
+                ScanRight(distanceField, y);
+            }
+        }
+
+        private static void ScanLeft(Size[,] distanceField, int y)
+        {
+            for (int x = distanceField.GetLength(1) - 2; x >= 0; x--)
+            {
+                distanceField[y, x] = MinMagnitude(distanceField[y, x], distanceField[y, x + 1] + new Size(1, 0));
+            }
+        }
+
+        private static void ScanRight(Size[,] distanceField, int y)
+        {
+            for (int x = 1; x < distanceField.GetLength(1); x++)
+            {
+                distanceField[y, x] = MinMagnitude(distanceField[y, x], distanceField[y, x - 1] + new Size(1, 0));
             }
         }
 
