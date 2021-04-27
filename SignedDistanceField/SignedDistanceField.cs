@@ -168,13 +168,16 @@ namespace AssortedPlugins.SignedDistanceField
                 }
             }
 
-            Parallel.Invoke(() => FastSweep(distanceField), () => FastSweep(invertedField));
+            Parallel.Invoke(
+                () => ScanDown(distanceField),
+                () => ScanUp(distanceField),
+                () => ScanDown(invertedField),
+                () => ScanUp(invertedField));
         }
 
-        private void FastSweep(VectorField distanceField)
+        private void ScanDown(VectorField distanceField)
         {
             Point position = default;
-
             for (position.Y = 0; position.Y < distanceField.Height; position.Y++)
             {
                 if (IsCancelRequested) { break; }
@@ -194,7 +197,11 @@ namespace AssortedPlugins.SignedDistanceField
                     distanceField[position] = MinMagnitude(distanceField[position], distanceField[position + Right] + Right);
                 }
             }
+        }
 
+        private void ScanUp(VectorField distanceField)
+        {
+            Point position = default;
             for (position.Y = distanceField.Height - 1; position.Y >= 0; position.Y--)
             {
                 if (IsCancelRequested) { break; }
